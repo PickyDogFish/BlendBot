@@ -23,7 +23,8 @@ class Exp(Cog):
 
     @Cog.listener()
     async def on_message(self, message):
-        await self.process_msg_xp(message)
+        if not message.author.bot:
+            await self.process_msg_xp(message)
 
 
 

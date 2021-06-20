@@ -10,6 +10,9 @@ CREATE TABLE IF NOT EXISTS submissions (
     msgID integer PRIMARY KEY,
     voteDay text DEFAULT (datetime('now', 'localtime')),
     challengeType integer,
+    challengeID integer,
+    FOREIGN KEY (challengeID) REFERENCES challenges (challengeID)
+
     FOREIGN KEY (challengeType) REFERENCES challengeTypes (challengeTypeID),
 
     FOREIGN KEY (userID) REFERENCES users (userID)
@@ -32,7 +35,17 @@ CREATE TABLE IF NOT EXISTS challengeTypes (
 CREATE TABLE IF NOT EXISTS themes (
     themeName text PRIMARY KEY,
     themeStatus integer DEFAULT 0,
-    used boolean DEFAULT 0
+    used boolean DEFAULT 0,
+    lastUsed text DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS challenges (
+    challengeTypeID integer,
+    themeName text,
+    challengeID integer PRIMARY KEY AUTOINCREMENT,
+    startDate text DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (themeName) REFERENCES themes (themeName)
+    FOREIGN KEY (challengeTypeID) REFERENCES challengeTypes (challengeTypeID)
+)
 
 
