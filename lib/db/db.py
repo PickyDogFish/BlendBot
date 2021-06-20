@@ -45,9 +45,9 @@ def records(command, *values):
     return cur.fetchall()
 
 def column(command, *values):
-    cur.execute(command. tuple(values))
+    cur.execute(command, tuple(values))
 
-    return [item[0] for item in cur.fetchall]
+    return [item[0] for item in cur.fetchall()]
 
 def execute(command, *values):
     cur.execute(command, tuple(values))
