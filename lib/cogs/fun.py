@@ -20,6 +20,15 @@ class Fun(Cog):
         db.execute("INSERT OR IGNORE INTO users (UserID) VALUES (?)", ctx.author.id)
         await ctx.send(f"Added {ctx.author.mention} to the database!")
 
+    @command(name="suggest")
+    async def suggest_theme(self, ctx, *, sugg):
+        neki = db.execute("SELECT themeName FROM themes WHERE themeName = ?", sugg)
+        if (neki == None):
+            db.execute("INSERT INTO themes (themeName) VALUES (?)", sugg)
+            ctx.send("Thank you for suggesting " + sugg + "!")
+        else:
+            ctx.send("Theme has already been suggested")
+
     @Cog.listener()
     async def on_ready(self):
         print("fun cog ready")

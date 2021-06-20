@@ -29,3 +29,10 @@ CREATE TABLE IF NOT EXISTS challengeTypes (
     challengeTypeDescription text
 );
 
+CREATE TABLE IF NOT EXISTS themes (
+    themeName text PRIMARY KEY,
+    themeStatus integer DEFAULT 0,
+    used boolean DEFAULT 0
+);
+
+
