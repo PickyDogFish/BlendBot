@@ -8,12 +8,11 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS submissions (
     userID integer,
     msgID integer PRIMARY KEY,
-    voteDay text DEFAULT (datetime('now', 'localtime')),
-    challengeType integer,
+    challengeTypeID integer default 0,
     challengeID integer,
     FOREIGN KEY (challengeID) REFERENCES challenges (challengeID)
 
-    FOREIGN KEY (challengeType) REFERENCES challengeTypes (challengeTypeID),
+    FOREIGN KEY (challengeTypeID) REFERENCES challengeTypes (challengeTypeID),
 
     FOREIGN KEY (userID) REFERENCES users (userID)
 );

@@ -51,6 +51,8 @@ class Bot(BotBase):
         channel = self.get_channel(GENERAL_ID)
         await channel.send("every minute")
 
+        
+
     async def on_disconnect(self):
         print("Bot disconnected")
 

@@ -41,6 +41,12 @@ class Fun(Cog):
         embeded.add_field(name="$suggest", value="Allows you to suggest a prompt to add to the pool. These suggestions will be manually reviewed")
         await ctx.send(embed = embeded)
 
+    @command(name="submit")
+    async def submit(self, ctx):
+        if len(ctx.message.attachments) > 0:
+            db.execute("INSERT INTO submissions (userID, msgID)")
+            
+
     @Cog.listener()
     async def on_ready(self):
         print("fun cog ready")
