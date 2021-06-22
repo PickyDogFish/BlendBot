@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS submissions (
     userID integer,
     msgID integer PRIMARY KEY,
+    votingMsgID integer,
     challengeID integer,
     FOREIGN KEY (challengeID) REFERENCES challenges (challengeID)
 
@@ -15,11 +16,11 @@ CREATE TABLE IF NOT EXISTS submissions (
 );
 
 CREATE TABLE IF NOT EXISTS votes (
-    msgID integer,
+    votingMsgID integer,
     voterID integer,
     vote integer DEFAULT 0,
-	PRIMARY KEY (msgID, voterID),
-	FOREIGN KEY (msgID) REFERENCES submissions (msgID),
+	PRIMARY KEY (votingMsgID, voterID),
+	FOREIGN KEY (VotingMsgID) REFERENCES submissions (votingMsgID),
     FOREIGN KEY (voterID) REFERENCES users (userID)
 );
 
