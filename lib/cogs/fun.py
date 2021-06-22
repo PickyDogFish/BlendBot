@@ -21,7 +21,6 @@ class Fun(Cog):
     async def suggest_theme(self, ctx, *, sugg):
         neki = db.field("SELECT themeName FROM themes WHERE themeName = ?", (sugg))
         if (neki == None):
-            print(neki)
             db.execute("INSERT INTO themes (themeName) VALUES (?)", sugg)
             await ctx.send("Thank you for suggesting " + sugg + "!")
         else:
@@ -44,7 +43,8 @@ class Fun(Cog):
     @command(name="submit")
     async def submit(self, ctx):
         if len(ctx.message.attachments) > 0:
-            db.execute("INSERT INTO submissions (userID, msgID)")
+            db.execute("INSERT INTO submissions (userID, msgID) VALUES (?, ?)", ctx.author.id, ctx.message.id)
+            await ctx.message.add_reaction("✅")
             
 
     @Cog.listener()

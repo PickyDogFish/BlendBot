@@ -51,13 +51,13 @@ class Admin(Cog):
     @command(name="setnotused", aliases = ["setunused"])
     async def not_used(self, ctx, theme):
         if ctx.author.guild_permissions.administrator:
-            db.execute("UPDATE themes SET used = 0 WHERE themeName = ?", theme)
+            db.execute("UPDATE themes SET lastUsed = '2011-11-11 11:11:11' WHERE themeName = ?", theme)
             await ctx.channel.send("Theme set to not used")
     
     @command(name="setused")
     async def used(self, ctx, theme):
         if ctx.author.guild_permissions.administrator:
-            db.execute("UPDATE themes SET used = 1 WHERE themeName = ?", theme)
+            db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(),theme)
             await ctx.channel.send("Theme set to used")
 
     @command(name="setdaily")

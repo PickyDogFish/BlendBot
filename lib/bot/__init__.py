@@ -1,6 +1,6 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from discord.ext.commands import Bot as BotBase
-from discord import Intents, channel
+from discord import Intents, Embed, Activity, ActivityType
 from discord.ext.commands.errors import CommandNotFound
 from discord.ext.commands import CommandNotFound
 from apscheduler.triggers.cron import CronTrigger
@@ -12,7 +12,8 @@ PREFIX = "$"
 OWNER_IDS = [176764856513462272]
 COGS = [path.split("\\")[-1][:-3] for path in glob("./lib/cogs/*.py")]
 
-GENERAL_ID = 835427910201507860
+GENERAL_CHANNEL_ID = 835427910201507860
+VOTING_CHANNEL_ID = 835429505257963550
 
 class Bot(BotBase):
     def __init__(self):
@@ -48,13 +49,18 @@ class Bot(BotBase):
         print("Bot connected")
 
     async def daily_challenge(self):
-        channel = self.get_channel(GENERAL_ID)
-        await channel.send("every minute")
-
-        
+        #creates new challenge entry in db, makes announcement, sets bot status
+        newDailyTheme = db.field("SELECT themeName FROM themes WHERE themeStatus = 1 ORDER BY RANDOM() LIMIT 1")
+        db.execute("INSERT INTO challenge (themeName) VALUES (?)", newDailyTheme)
+        embeded = Embed(colour = 16754726, title="The new theme for the daily challenge is: ", description="**"+newDailyTheme.upper()+ "**")
+        await self.get_channel(GENERAL_CHANNEL_ID).send(embed=embeded)
+        await self.change_presence(activity=Activity(type=ActivityType.watching, name = "you make " + newDailyTheme))
 
     async def on_disconnect(self):
         print("Bot disconnected")
+
+    async def on_connect(self):
+        print("Bot connected")
 
     async def on_error(self, err, *args, **kwargs):
         if err == "on_command_error":
@@ -72,10 +78,8 @@ class Bot(BotBase):
     async def on_ready(self):
         if not self.ready:
             self.guild = self.get_guild(831137325299138621)
-            self.scheduler.add_job(self.daily_challenge, CronTrigger(hour= 15, minute = 30, second = 0))
+            self.scheduler.add_job(self.daily_challenge, CronTrigger(hour= 18, minute = 35, second = 0))
             self.scheduler.start()
-
-
 
             self.ready = True
             print("bot ready")

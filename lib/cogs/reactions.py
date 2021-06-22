@@ -1,4 +1,9 @@
+
+from lib.bot import VOTING_CHANNEL_ID
 from discord.ext.commands import Cog
+from ..db import db
+
+switcher = {"1️⃣": 1, "2️⃣": 2, "3️⃣": 3, "4️⃣": 4, "5️⃣": 5}
 
 class Reactions(Cog):
     def __init__(self, bot):
@@ -19,7 +24,12 @@ class Reactions(Cog):
 
     @Cog.listener()
     async def on_raw_reaction_add(self, payload):
-        print(f"{payload.member.display_name} reacted with {payload.emoji.name}")
+        if (payload.channel_id == VOTING_CHANNEL_ID and not (payload.user_id == self.bot.user.id)):
+            print(f"{payload.member.display_name} reacted with {payload.emoji.name}")
+            emoji = switcher.get(payload.emoji.name)
+            db.execute("REPLACE INTO votes (msgID, voterID, vote) VALUES (?, ?, ?)",payload.message_id, payload.user_id, emoji)
+            msg = self.bot.get_channel()
+
 
     @Cog.listener()
     async def on_raw_reaction_remove(self, payload):
