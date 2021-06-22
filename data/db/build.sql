@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS challengeTypes (
 CREATE TABLE IF NOT EXISTS themes (
     themeName text PRIMARY KEY,
     themeStatus integer DEFAULT 0,
-    lastUsed text DEFAULT CURRENT_TIMESTAMP NOT NULL
+    lastUsed text DEFAULT '2011-11-11 11:11:11' NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS challenge (

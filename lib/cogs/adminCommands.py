@@ -63,10 +63,12 @@ class Admin(Cog):
     @command(name="setdaily")
     async def setdaily(self, ctx, theme):
         if ctx.author.guild_permissions.administrator:
-            if db.execute("SELECT * FROM themes WHERE themeName = ?", theme) != None:
-                db.execute("UPDATE challange SET themeName = ? WHERE startDATE", theme)
+            if db.field("SELECT * FROM themes WHERE themeName = ?", theme) != None:
+                lastDaily = db.field("SELECT challengeID FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC LIMIT 1")
+                db.execute("UPDATE challenge SET themeName = ? WHERE challengeID = ?", theme, lastDaily)
+                db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(), theme)
                 await ctx.channel.edit(name="Theme-" + theme)
-                await self.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name = "you make " + theme))
+                await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name = "you make " + theme))
             else:
                 await ctx.channel.send("Theme not in pool")
 
