@@ -64,11 +64,8 @@ class Admin(Cog):
     async def setdaily(self, ctx, theme):
         if ctx.author.guild_permissions.administrator:
             if db.execute("SELECT * FROM themes WHERE themeName = ?", theme) != None:
-                db.execute("UPDATE challange SET themeName = ?", theme)
-
-                # TODO:
-                # change_name() of the channel and bot activity
-
+                db.execute("UPDATE challange SET themeName = ? WHERE startDATE", theme)
+                await ctx.channel.edit(name="Theme-" + theme)
                 await self.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name = "you make " + theme))
             else:
                 await ctx.channel.send("Theme not in pool")
