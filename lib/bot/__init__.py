@@ -55,6 +55,7 @@ class Bot(BotBase):
         embeded = Embed(colour = 16754726, title="The new theme for the daily challenge is: ", description="**"+newDailyTheme.upper()+ "**")
         await self.get_channel(GENERAL_CHANNEL_ID).send(embed=embeded)
         await self.change_presence(activity=Activity(type=ActivityType.watching, name = "you make " + newDailyTheme))
+        await self.get_channel(GENERAL_CHANNEL_ID).edit(name="Theme-" + newDailyTheme)
 
     async def on_disconnect(self):
         print("Bot disconnected")

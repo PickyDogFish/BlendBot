@@ -63,11 +63,11 @@ class Admin(Cog):
     @command(name="setdaily")
     async def setdaily(self, ctx, theme):
         if ctx.author.guild_permissions.administrator:
-            if db.execute("SELECT * FROM themes WHERE themeName = ?", theme) == None:
+            if db.execute("SELECT * FROM themes WHERE themeName = ?", theme) != None:
+                db.execute("UPDATE challange SET themeName = ?", theme)
 
                 # TODO:
-                # set daily theme to daily challange
-                # change_name()
+                # change_name() of the channel and bot activity
 
                 await self.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name = "you make " + theme))
             else:
