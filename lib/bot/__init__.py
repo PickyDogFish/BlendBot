@@ -59,31 +59,36 @@ class Bot(BotBase):
         #just double checking if the embed is still there
         if msg.attachments:
             attach = await msg.attachments[0].to_file()
-            await self.get_channel(VOTING_CHANNEL_ID).send("Todays submission by " + self.get_user(userID).display_name + ":", file = attach)
+            message = await self.get_channel(VOTING_CHANNEL_ID).send("Todays submission by " + self.get_user(userID).display_name + ":", file = attach)
+            await message.add_reaction("1️⃣")
+            await message.add_reaction("2️⃣")
+            await message.add_reaction("3️⃣")
+            await message.add_reaction("4️⃣")
+            await message.add_reaction("5️⃣")
+            return message.id
 
     async def daily_challenge(self):
-        #move things to voting
         challengeID, themeName = db.record("SELECT challengeID, themeName FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
+        #count votes
+        #TODO
+
+        #move things to voting
         if db.record("SELECT userID, msgID FROM submission WHERE challengeID = ?", challengeID) != None:
             msgID, userID = db.record("SELECT msgID, userID FROM submission WHERE challengeID = ?", challengeID)
-            await self.move_to_voting(msgID, userID)
+            votingMsgID = await self.move_to_voting(msgID, userID)
+            db.execute("UPDATE submission SET votingMsgID = ? WHERE msgID = ?", votingMsgID, msgID)
         else:
             await self.get_channel(VOTING_CHANNEL_ID).send("Looks like there are no submissions for the theme " + themeName)
-
-        print("moved things to voting")
 
         #createsnew challenge entry in db, make announcement, set bot status
         newDailyTheme = db.field("SELECT themeName FROM themes WHERE themeStatus = 1 ORDER BY RANDOM() LIMIT 1")
         db.execute("INSERT INTO challenge (themeName) VALUES (?)", newDailyTheme)
         db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(), newDailyTheme)
-        print("added new challenge to DB")
         embeded = Embed(colour = 16754726, title="The new theme for the daily challenge is: ", description="**"+newDailyTheme.upper()+ "**")
         await self.get_channel(SUBMIT_CHANNEL_ID).send(embed=embeded)
         await self.change_presence(activity=Activity(type=ActivityType.watching, name = "you make " + newDailyTheme))
-        #apparently it can get stuck on renaming the channel...
+        #apparently it can get stuck on renaming the channel (hopefully not a problem when doing once a day)...
         await self.get_channel(SUBMIT_CHANNEL_ID).edit(name="Theme-" + newDailyTheme)
-
-        print("got through the daily challenge function")
         
 
     async def on_disconnect(self):

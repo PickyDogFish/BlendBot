@@ -46,7 +46,6 @@ class Fun(Cog):
         if ctx.channel.id != SUBMIT_CHANNEL_ID:
             await ctx.send("Cannot submit in this channel.")
         elif len(ctx.message.attachments) > 0 and ctx.channel.id == SUBMIT_CHANNEL_ID:
-            print("submitting")
             chalID = db.field("SELECT challengeID FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
             if (db.field("SELECT msgID FROM submission WHERE challengeID = ? AND userID = ?", chalID, ctx.author.id) == None):
                 db.execute("INSERT INTO submission (userID, msgID, challengeID) VALUES (?, ?, ?)", ctx.author.id, ctx.message.id, chalID)
