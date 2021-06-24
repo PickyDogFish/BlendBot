@@ -23,7 +23,7 @@ def commit():
     cxn.commit()
 
 def autosave(sched):
-    sched.add_job(commit, CronTrigger(second=0))
+    sched.add_job(commit, CronTrigger(second='0,30'))
 
 def close():
     cxn.close()

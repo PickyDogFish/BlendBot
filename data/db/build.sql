@@ -1,15 +1,15 @@
 CREATE TABLE IF NOT EXISTS users (
-    userID integer PRIMARY KEY,
+    userID integer PRIMARY KEY NOT NULL,
     msgXP integer DEFAULT 0,
     renderXP integer DEFAULT 0,
     XPLock text DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS submissions (
+CREATE TABLE IF NOT EXISTS submission (
     userID integer,
-    msgID integer PRIMARY KEY,
+    msgID integer PRIMARY KEY NOT NULL,
     votingMsgID integer,
-    challengeID integer,
+    challengeID integer NOT NULL,
     FOREIGN KEY (challengeID) REFERENCES challenges (challengeID)
 
     FOREIGN KEY (userID) REFERENCES users (userID)
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS themes (
 CREATE TABLE IF NOT EXISTS challenge (
     challengeTypeID integer DEFAULT 0,
     themeName text NOT NULL,
-    challengeID integer PRIMARY KEY AUTOINCREMENT,
+    challengeID integer PRIMARY KEY AUTOINCREMENT NOT NULL,
     startDate text DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (themeName) REFERENCES themes (themeName)
     FOREIGN KEY (challengeTypeID) REFERENCES challengeTypes (challengeTypeID)

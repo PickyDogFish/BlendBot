@@ -1,3 +1,4 @@
+from lib.bot import SUBMIT_CHANNEL_ID
 from discord.ext.commands import Cog
 from discord.ext.commands import command
 from discord import Embed
@@ -41,10 +42,21 @@ class Fun(Cog):
         await ctx.send(embed = embeded)
 
     @command(name="submit")
-    async def submit(self, ctx):
-        if len(ctx.message.attachments) > 0:
-            db.execute("INSERT INTO submissions (userID, msgID) VALUES (?, ?)", ctx.author.id, ctx.message.id)
+    async def submit_daily(self, ctx):
+        if ctx.channel.id != SUBMIT_CHANNEL_ID:
+            await ctx.send("Cannot submit in this channel.")
+        elif len(ctx.message.attachments) > 0 and ctx.channel.id == SUBMIT_CHANNEL_ID:
+            print("submitting")
+            chalID = db.field("SELECT challengeID FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
+            if (db.field("SELECT msgID FROM submission WHERE challengeID = ? AND userID = ?", chalID, ctx.author.id) == None):
+                db.execute("INSERT INTO submission (userID, msgID, challengeID) VALUES (?, ?, ?)", ctx.author.id, ctx.message.id, chalID)
+            else:
+                db.execute("UPDATE submission SET msgID = ? WHERE challengeID = ? AND userID = ?", ctx.message.id, chalID, ctx.author.id)
             await ctx.message.add_reaction("✅")
+
+    @command(name="daily")
+    async def show_daily(self, ctx):
+        await ctx.send(await self.bot.get_daily_theme())
             
 
     @Cog.listener()

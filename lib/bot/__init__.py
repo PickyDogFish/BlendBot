@@ -14,7 +14,8 @@ OWNER_IDS = [176764856513462272]
 COGS = [path.split("\\")[-1][:-3] for path in glob("./lib/cogs/*.py")]
 
 GENERAL_CHANNEL_ID = 835427910201507860
-VOTING_CHANNEL_ID = 835429505257963550
+VOTING_CHANNEL_ID = 835429490464129054
+SUBMIT_CHANNEL_ID = 835429505257963550
 
 class Bot(BotBase):
     def __init__(self):
@@ -49,15 +50,41 @@ class Bot(BotBase):
     async def on_connect(self):
         print("Bot connected")
 
+    async def get_daily_theme(self):
+        return db.field("SELECT themeName FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
+
+    async def move_to_voting(self, msgID, userID):
+        channel = self.get_channel(SUBMIT_CHANNEL_ID)
+        msg = await channel.fetch_message(msgID)
+        #just double checking if the embed is still there
+        if msg.attachments:
+            attach = await msg.attachments[0].to_file()
+            await self.get_channel(VOTING_CHANNEL_ID).send("Todays submission by " + self.get_user(userID).display_name + ":", file = attach)
+
     async def daily_challenge(self):
-        #creates new challenge entry in db, makes announcement, sets bot status
+        #move things to voting
+        challengeID, themeName = db.record("SELECT challengeID, themeName FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
+        if db.record("SELECT userID, msgID FROM submission WHERE challengeID = ?", challengeID) != None:
+            msgID, userID = db.record("SELECT msgID, userID FROM submission WHERE challengeID = ?", challengeID)
+            await self.move_to_voting(msgID, userID)
+        else:
+            await self.get_channel(VOTING_CHANNEL_ID).send("Looks like there are no submissions for the theme " + themeName)
+
+        print("moved things to voting")
+
+        #createsnew challenge entry in db, make announcement, set bot status
         newDailyTheme = db.field("SELECT themeName FROM themes WHERE themeStatus = 1 ORDER BY RANDOM() LIMIT 1")
         db.execute("INSERT INTO challenge (themeName) VALUES (?)", newDailyTheme)
         db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(), newDailyTheme)
+        print("added new challenge to DB")
         embeded = Embed(colour = 16754726, title="The new theme for the daily challenge is: ", description="**"+newDailyTheme.upper()+ "**")
-        await self.get_channel(GENERAL_CHANNEL_ID).send(embed=embeded)
+        await self.get_channel(SUBMIT_CHANNEL_ID).send(embed=embeded)
         await self.change_presence(activity=Activity(type=ActivityType.watching, name = "you make " + newDailyTheme))
-        await self.get_channel(GENERAL_CHANNEL_ID).edit(name="Theme-" + newDailyTheme)
+        #apparently it can get stuck on renaming the channel...
+        await self.get_channel(SUBMIT_CHANNEL_ID).edit(name="Theme-" + newDailyTheme)
+
+        print("got through the daily challenge function")
+        
 
     async def on_disconnect(self):
         print("Bot disconnected")
@@ -81,7 +108,7 @@ class Bot(BotBase):
     async def on_ready(self):
         if not self.ready:
             self.guild = self.get_guild(831137325299138621)
-            self.scheduler.add_job(self.daily_challenge, CronTrigger(hour= 18, minute = 35, second = 0))
+            self.scheduler.add_job(self.daily_challenge, CronTrigger(second = 0))
             self.scheduler.start()
 
             self.ready = True
