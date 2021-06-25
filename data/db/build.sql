@@ -44,6 +44,25 @@ CREATE TABLE IF NOT EXISTS challenge (
     FOREIGN KEY (challengeTypeID) REFERENCES challengeTypes (challengeTypeID)
 );
 
+CREATE TABLE IF NOT EXISTS currentChallenge (
+    currentChallengeID integer,
+    previousChallengeID integer,
+    challengeTypeID integer PRIMARY KEY,
+    FOREIGN KEY (currentChallengeID) REFERENCES challenge (challengeID),
+    FOREIGN KEY (previousChallengeID) REFERENCES challenge (challengeID), 
+    FOREIGN KEY (challengeTypeID) REFERENCES challengeTypes (challengeTypeID)
+);
+
 INSERT OR IGNORE INTO challengeTypes (challengeTypeID, challengeTypeDescription) VALUES (0, "Daily challenge"), (1, "Weekly challenge");
+
+INSERT OR IGNORE INTO themes (themeName) VALUES ("placeholder");
+
+INSERT OR IGNORE INTO challenge (challengeID, themeName) VALUES (0, "placeholder");
+
+INSERT OR IGNORE INTO currentChallenge (currentChallengeID, previousChallengeID, challengeTypeID) VALUES (0,0,0);
+
+INSERT OR IGNORE INTO users (userID) VALUES (176764856513462272), (261049658569129984);
+
+INSERT OR IGNORE INTO themes (themeName, themeStatus) VALUES ("Whatever you want", 1);
 
 

@@ -67,29 +67,36 @@ class Bot(BotBase):
             await message.add_reaction("5️⃣")
             return message.id
 
-    async def daily_challenge(self):
-        challengeID, themeName = db.record("SELECT challengeID, themeName FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
-        #count votes
-        #TODO
 
+
+    async def daily_challenge(self):
+        challengeID, previousChallengeID = db.record("SELECT currentChallengeID, previousChallengeID FROM currentChallenge WHERE challengeTypeID = 0")
+        scores = db.records("SELECT userID, msgID, challengeID, SUM(vote) FROM submission NATURAL JOIN votes WHERE challengeID = ? GROUP BY msgID", previousChallengeID)
+        for submission in scores:
+            await self.get_channel(VOTING_CHANNEL_ID).send(self.get_user(submission[0]).display_name + " collected " + str(submission[3]) + " points")
+        
         #move things to voting
+        themeName = db.field("SELECT themeName FROM challenge WHERE challengeID = ?", challengeID)
         if db.record("SELECT userID, msgID FROM submission WHERE challengeID = ?", challengeID) != None:
-            msgID, userID = db.record("SELECT msgID, userID FROM submission WHERE challengeID = ?", challengeID)
-            votingMsgID = await self.move_to_voting(msgID, userID)
-            db.execute("UPDATE submission SET votingMsgID = ? WHERE msgID = ?", votingMsgID, msgID)
+            subs = db.records("SELECT userID, msgID FROM submission WHERE challengeID = ?", challengeID)
+            for userID, msgID in subs:
+                msgID, userID = db.record("SELECT msgID, userID FROM submission WHERE challengeID = ?", challengeID)
+                votingMsgID = await self.move_to_voting(msgID, userID)
+                db.execute("UPDATE submission SET votingMsgID = ? WHERE msgID = ?", votingMsgID, msgID)
         else:
             await self.get_channel(VOTING_CHANNEL_ID).send("Looks like there are no submissions for the theme " + themeName)
 
         #createsnew challenge entry in db, make announcement, set bot status
         newDailyTheme = db.field("SELECT themeName FROM themes WHERE themeStatus = 1 ORDER BY RANDOM() LIMIT 1")
         db.execute("INSERT INTO challenge (themeName) VALUES (?)", newDailyTheme)
+        newChallengeID = db.field("SELECT challengeID, themeName FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
         db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(), newDailyTheme)
+        db.execute("UPDATE currentChallenge SET currentChallengeID = ?, previousChallengeID = ? WHERE challengeTypeID = 0", newChallengeID, challengeID)
         embeded = Embed(colour = 16754726, title="The new theme for the daily challenge is: ", description="**"+newDailyTheme.upper()+ "**")
         await self.get_channel(SUBMIT_CHANNEL_ID).send(embed=embeded)
         await self.change_presence(activity=Activity(type=ActivityType.watching, name = "you make " + newDailyTheme))
         #apparently it can get stuck on renaming the channel (hopefully not a problem when doing once a day)...
         await self.get_channel(SUBMIT_CHANNEL_ID).edit(name="Theme-" + newDailyTheme)
-        
 
     async def on_disconnect(self):
         print("Bot disconnected")
@@ -113,7 +120,7 @@ class Bot(BotBase):
     async def on_ready(self):
         if not self.ready:
             self.guild = self.get_guild(831137325299138621)
-            self.scheduler.add_job(self.daily_challenge, CronTrigger(second = 0))
+            self.scheduler.add_job(self.daily_challenge, CronTrigger(minute=5))
             self.scheduler.start()
 
             self.ready = True
@@ -124,5 +131,8 @@ class Bot(BotBase):
     async def on_message(self, message):
         if not message.author.bot:
             await self.process_commands(message)
+        
+        if message.content.startswith("$dodaily"):
+            await self.daily_challenge()
 
 bot = Bot()
