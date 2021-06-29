@@ -16,7 +16,8 @@ class Welcome(Cog):
         await self.bot.get_channel(855802065737351178).send(f"Welcome to **{member.guild.name}** {member.mention}!")
 
     async def on_member_remove(self, member):
-        await self.bot.get_channel(855802065737351178).send(f"Sad to see you go {member.mention}!")
+        #await self.bot.get_channel(855802065737351178).send(f"Sad to see you go {member.mention}!")
+        pass
 
     
 

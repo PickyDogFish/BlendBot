@@ -26,11 +26,12 @@ class Reactions(Cog):
         if (payload.channel_id == VOTING_CHANNEL_ID and not (payload.user_id == self.bot.user.id)):
             print(f"{payload.member.display_name} reacted with {payload.emoji.name}")
             emoji = switcher.get(payload.emoji.name)
-            db.execute("REPLACE INTO votes (votingMsgID, voterID, vote) VALUES (?, ?, ?)",payload.message_id, payload.user_id, emoji)
-            channel = self.bot.get_channel(payload.channel_id)
-            user = self.bot.get_user(payload.user_id)
-            msg = await channel.fetch_message(payload.message_id)
-            await msg.remove_reaction(payload.emoji, user)
+            if emoji != None:
+                db.execute("REPLACE INTO votes (votingMsgID, voterID, vote) VALUES (?, ?, ?)",payload.message_id, payload.user_id, emoji)
+                channel = self.bot.get_channel(payload.channel_id)
+                user = self.bot.get_user(payload.user_id)
+                msg = await channel.fetch_message(payload.message_id)
+                await msg.remove_reaction(payload.emoji, user)
 
 
     @Cog.listener()

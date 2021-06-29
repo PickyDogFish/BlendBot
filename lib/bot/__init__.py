@@ -1,11 +1,13 @@
-from datetime import date, datetime
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from discord.ext.commands import Bot as BotBase
-from discord import Intents, Embed, Activity, ActivityType
-from discord.ext.commands.errors import CommandNotFound
-from discord.ext.commands import CommandNotFound
-from apscheduler.triggers.cron import CronTrigger
+from datetime import date, datetime, timedelta, time
 from glob import glob
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+from discord import Activity, ActivityType, Embed, Intents
+from discord.ext.commands import Bot as BotBase
+from discord.ext.commands import CommandNotFound
+from discord.ext.commands.errors import CommandNotFound
+from math import sqrt
 
 from ..db import db
 
@@ -16,6 +18,7 @@ COGS = [path.split("\\")[-1][:-3] for path in glob("./lib/cogs/*.py")]
 GENERAL_CHANNEL_ID = 835427910201507860
 VOTING_CHANNEL_ID = 835429490464129054
 SUBMIT_CHANNEL_ID = 835429505257963550
+LB_CHANNEL_ID = 857997935244869652
 
 class Bot(BotBase):
     def __init__(self):
@@ -58,8 +61,13 @@ class Bot(BotBase):
         msg = await channel.fetch_message(msgID)
         #just double checking if the embed is still there
         if msg.attachments:
-            attach = await msg.attachments[0].to_file()
-            message = await self.get_channel(VOTING_CHANNEL_ID).send("Todays submission by " + self.get_user(userID).display_name + ":", file = attach)
+            f = msg.attachments[0].url
+            embeded = Embed(title="Has collected 0 votes", colour = 0x5965F2)
+            embeded.set_author(name = self.get_user(userID).display_name, icon_url=self.get_user(userID).avatar_url)
+            embeded.set_image(url=f)
+            message = await self.get_channel(VOTING_CHANNEL_ID).send(embed = embeded)
+            #attach = await msg.attachments[0].to_file()
+            #message = await self.get_channel(VOTING_CHANNEL_ID).send("Todays submission by " + self.get_user(userID).display_name + ":", file = attach)
             await message.add_reaction("1️⃣")
             await message.add_reaction("2️⃣")
             await message.add_reaction("3️⃣")
@@ -71,10 +79,22 @@ class Bot(BotBase):
 
     async def daily_challenge(self):
         challengeID, previousChallengeID = db.record("SELECT currentChallengeID, previousChallengeID FROM currentChallenge WHERE challengeTypeID = 0")
+        #count votes
         scores = db.records("SELECT userID, msgID, challengeID, SUM(vote) FROM submission NATURAL JOIN votes WHERE challengeID = ? GROUP BY msgID", previousChallengeID)
+        isSubmission = False
+        voteCountText = ""
         for submission in scores:
-            await self.get_channel(VOTING_CHANNEL_ID).send(self.get_user(submission[0]).display_name + " collected " + str(submission[3]) + " points")
+            isSubmission = True
+            voteCountText += self.get_user(submission[0]).display_name + " collected " + str(submission[3]) + " points\n"
+            db.execute("UPDATE users SET renderXP = renderXP + ? WHERE userID = ?", submission[3], submission[0])
         
+        if isSubmission:
+            countTheme, startDate = db.record("SELECT themeName, startDate FROM challenge WHERE challengeID = ?", previousChallengeID)
+            voteCountEmbed = Embed(title="Vote counts for " + countTheme + ", which started on " + startDate + ":", description=voteCountText)
+            await self.get_channel(VOTING_CHANNEL_ID).send(embed=voteCountEmbed)
+            await self.clear_leaderboard()
+            await self.make_leaderboard()
+
         #move things to voting
         themeName = db.field("SELECT themeName FROM challenge WHERE challengeID = ?", challengeID)
         if db.record("SELECT userID, msgID FROM submission WHERE challengeID = ?", challengeID) != None:
@@ -87,10 +107,11 @@ class Bot(BotBase):
             await self.get_channel(VOTING_CHANNEL_ID).send("Looks like there are no submissions for the theme " + themeName)
 
         #createsnew challenge entry in db, make announcement, set bot status
-        newDailyTheme = db.field("SELECT themeName FROM themes WHERE themeStatus = 1 ORDER BY RANDOM() LIMIT 1")
-        db.execute("INSERT INTO challenge (themeName) VALUES (?)", newDailyTheme)
+        #TODO make it only select from the pool of not recently used themes
+        newDailyTheme = db.field("SELECT themeName FROM (SELECT * FROM themes ORDER BY lastUsed LIMIT 50) AS notUsed WHERE themeStatus = 1 ORDER BY RANDOM() LIMIT 1")
+        db.execute("INSERT INTO challenge (themeName, startDate, endDate) VALUES (?, ?)", newDailyTheme, datetime.utcnow().isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(hours=24)).isoformat(timespec='seconds', sep=' '))
         newChallengeID = db.field("SELECT challengeID, themeName FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
-        db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(), newDailyTheme)
+        db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '), newDailyTheme)
         db.execute("UPDATE currentChallenge SET currentChallengeID = ?, previousChallengeID = ? WHERE challengeTypeID = 0", newChallengeID, challengeID)
         embeded = Embed(colour = 16754726, title="The new theme for the daily challenge is: ", description="**"+newDailyTheme.upper()+ "**")
         await self.get_channel(SUBMIT_CHANNEL_ID).send(embed=embeded)
@@ -120,7 +141,7 @@ class Bot(BotBase):
     async def on_ready(self):
         if not self.ready:
             self.guild = self.get_guild(831137325299138621)
-            self.scheduler.add_job(self.daily_challenge, CronTrigger(minute=5))
+            self.scheduler.add_job(self.daily_challenge, CronTrigger(hour=6, minute=0))
             self.scheduler.start()
 
             self.ready = True
@@ -134,5 +155,25 @@ class Bot(BotBase):
         
         if message.content.startswith("$dodaily"):
             await self.daily_challenge()
+
+    async def make_leaderboard(self):
+        scores = db.records("SELECT userID, renderXP FROM users ORDER BY renderXP DESC LIMIT 10")
+        for score in scores:
+            user = self.get_user(score[0])
+            if user == None:
+                print("User not in the server anymore.")
+            else:
+                text = "Number of points: " + str(score[1]) + "   Level: " + str(int(sqrt(score[1]*40)//10)) + "\n\n"
+                embed = Embed(colour = 0xFF0000, title=text)
+                embed.set_author(name = user.display_name, icon_url=user.avatar_url)
+                await self.get_channel(LB_CHANNEL_ID).send(embed=embed)
+
+    async def clear_leaderboard(self):
+        msg=[]
+        channel = self.get_channel(LB_CHANNEL_ID)
+        vceraj = datetime.combine(datetime.now().date() - timedelta(days=2), time(0))
+        for message in await channel.history(after=vceraj).flatten():
+            msg.append(message)
+        await channel.delete_messages(msg)
 
 bot = Bot()

@@ -4,6 +4,7 @@ from discord.ext.commands import command
 from discord import Embed
 from random import choice
 from ..db import db
+from datetime import datetime
 
 class Fun(Cog):
     def __init__(self, bot):
@@ -33,7 +34,7 @@ class Fun(Cog):
         await ctx.send(randomTheme)
 
     @command(name="help")
-    async def display_help(self, ctx):
+    async def show_help(self, ctx):
         embeded = Embed(title="Daily blend bot help page", colour = 16754726, description = "Here are the user commands:")
         embeded.add_field(name="$help", value="Displays this help page")
         embeded.add_field(name="$daily", value="Tells you the prompt of the day")
@@ -46,7 +47,7 @@ class Fun(Cog):
         if ctx.channel.id != SUBMIT_CHANNEL_ID:
             await ctx.send("Cannot submit in this channel.")
         elif len(ctx.message.attachments) > 0 and ctx.channel.id == SUBMIT_CHANNEL_ID:
-            chalID = db.field("SELECT challengeID FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
+            chalID = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0")
             if (db.field("SELECT msgID FROM submission WHERE challengeID = ? AND userID = ?", chalID, ctx.author.id) == None):
                 db.execute("INSERT INTO submission (userID, msgID, challengeID) VALUES (?, ?, ?)", ctx.author.id, ctx.message.id, chalID)
             else:
@@ -56,6 +57,14 @@ class Fun(Cog):
     @command(name="daily")
     async def show_daily(self, ctx):
         await ctx.send(await self.bot.get_daily_theme())
+
+    @command(name="time")
+    async def show_time_left(self, ctx):
+        now = datetime.now()
+        nekiure = (5 - now.hour) % 24
+        nekimin = 60 - now.minute
+        await ctx.send("You have " + str(nekiure) + " hours and " + str(nekimin) + " minutes left!")
+
             
 
     @Cog.listener()

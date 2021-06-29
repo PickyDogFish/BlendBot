@@ -9,7 +9,7 @@ class Exp(Cog):
         self.bot=bot
 
     async def add_msg_xp(self, message, xp):
-        db.execute("UPDATE users SET msgXP = msgXP + ?, XPLock = ? WHERE userID = ?", randint(3,5), (datetime.utcnow() + timedelta(seconds=60)).isoformat(), message.author.id)
+        db.execute("UPDATE users SET msgXP = msgXP + ?, XPLock = ? WHERE userID = ?", randint(3,5), (datetime.utcnow() + timedelta(seconds=60)).isoformat(timespec='seconds', sep=' '), message.author.id)
 
     async def process_msg_xp(self, message):
         msgxp,xplock = db.record("SELECT msgXP, XPLock FROM users WHERE UserID = ?", message.author.id)

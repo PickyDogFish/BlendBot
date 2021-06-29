@@ -5,6 +5,7 @@ from discord.ext.commands import Cog
 from discord.ext.commands import command
 from ..db import db
 from datetime import date, datetime, timedelta
+import json
 
 class Admin(Cog):
     def __init__(self, bot):
@@ -13,11 +14,6 @@ class Admin(Cog):
     @Cog.listener()
     async def on_ready(self):
         print("admin cog ready")
-
-    @command(name="themes")
-    async def display_themes(self, ctx):
-        seznam_tem = db.column("SELECT themeName FROM themes WHERE themeStatus = 1 AND used = 0")
-        await ctx.channel.send(', '.join(seznam_tem))
 
     @command(name="clear")
     async def clear(self, ctx, num_of_msgs_to_delete):
@@ -57,16 +53,17 @@ class Admin(Cog):
     @command(name="setused")
     async def used(self, ctx, theme):
         if ctx.author.guild_permissions.administrator:
-            db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(),theme)
+            db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().date().isoformat(),theme)
             await ctx.channel.send("Theme set to used")
 
+    #setdaily <themeName> sets the daily theme to the specified themeName
     @command(name="setdaily")
     async def setdaily(self, ctx, theme):
         if ctx.author.guild_permissions.administrator:
             if db.field("SELECT * FROM themes WHERE themeName = ?", theme) != None:
                 lastDaily = db.field("SELECT challengeID FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC LIMIT 1")
                 db.execute("UPDATE challenge SET themeName = ? WHERE challengeID = ?", theme, lastDaily)
-                db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(), theme)
+                db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().date().isoformat(), theme)
                 await ctx.channel.edit(name="Theme-" + theme)
                 await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name = "you make " + theme))
             else:
@@ -79,6 +76,63 @@ class Admin(Cog):
             db.execute("UPDATE users SET renderXP = renderXP + ? WHERE userID = ?", XPamount, userID)
             await ctx.channel.send("Added some XP")
 
+
+    #puts the old data into the new database, all paths are hardcoded
+    @command(name="parseolddata")
+    async def parse_old_data(self, ctx):
+        if ctx.author.guild_permissions.administrator:
+            await self.parse_user_data(ctx=ctx)
+            await self.parse_used_themes(ctx=ctx)
+            await self.parse_themes(ctx=ctx)
+            await self.parse_suggestions(ctx=ctx)
+            await ctx.send("Parsed old data")
+
+    async def parse_user_data(self, ctx):
+        if ctx.author.guild_permissions.administrator:
+            with open("D:\BotGit\levels.json", "r+") as file:
+                data = json.load(file)
+                for user in data:
+                    db.execute("INSERT OR IGNORE INTO users (userID, msgXP, renderXP) VALUES (?,?,?)", user, int(data[user]["messagepoints"]), data[user]["dailypoints"])
+
+    async def parse_themes(self, ctx):
+        if ctx.author.guild_permissions.administrator:
+            with open("D:/BotGit/themes.txt", "r") as file:
+                for line in file:
+                    db.execute("INSERT OR IGNORE INTO themes (themeName, themeStatus) VALUES (?,1)", line.strip().replace("_", " "))
+
+    async def parse_used_themes(self,ctx):
+        if ctx.author.guild_permissions.administrator:
+            with open("D:/BotGit/usedThemes.txt", "r") as file:
+                for line in file:
+                    db.execute("INSERT OR IGNORE INTO themes (themeName, themeStatus, lastUsed) VALUES (?,1,?)", line.strip().replace("_", " "), datetime.utcnow().date().isoformat())
+    
+    async def parse_suggestions(self,ctx):
+        if ctx.author.guild_permissions.administrator:
+            with open("D:/BotGit/suggestions.txt", "r") as file:
+                for line in file:
+                    db.execute("INSERT OR IGNORE INTO themes (themeName, themeStatus) VALUES (?,0)", line.strip().replace("_", " "))
+
+
+    #sends a message of max 100 suggested themes
+    @command(name="showsuggestions")
+    async def show_suggestions(self, ctx):
+        if ctx.author.guild_permissions.administrator:
+            listOfSuggestions = db.column("SELECT themeName FROM themes WHERE themeStatus = 0 LIMIT 100")
+            await ctx.send(listOfSuggestions)
+
+    #sends a message of max 100 rejected themes
+    @command(name="showrejected")
+    async def show_rejected(self, ctx):
+        if ctx.author.guild_permissions.administrator:
+            listOfRejected = db.column("SELECT themeName FROM themes WHERE themeStatus = -1 LIMIT 100")
+            await ctx.send(listOfRejected)
+
+    #sends a message of max 100 approved themes
+    @command(name="showapproved")
+    async def show_rejected(self, ctx):
+        if ctx.author.guild_permissions.administrator:
+            listOfRejected = db.column("SELECT themeName FROM themes WHERE themeStatus = 1 LIMIT 100")
+            await ctx.send(listOfRejected)
 
 def setup(bot):
     bot.add_cog(Admin(bot))
