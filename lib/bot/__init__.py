@@ -90,7 +90,7 @@ class Bot(BotBase):
         
         if isSubmission:
             countTheme, startDate = db.record("SELECT themeName, startDate FROM challenge WHERE challengeID = ?", previousChallengeID)
-            voteCountEmbed = Embed(title="Vote counts for " + countTheme + ", which started on " + startDate + ":", description=voteCountText)
+            voteCountEmbed = Embed(title="Vote counts for " + countTheme + ", which started on " + datetime.fromisoformat(startDate).date().isoformat() + ":", description=voteCountText)
             await self.get_channel(VOTING_CHANNEL_ID).send(embed=voteCountEmbed)
             await self.clear_leaderboard()
             await self.make_leaderboard()
@@ -109,7 +109,7 @@ class Bot(BotBase):
         #createsnew challenge entry in db, make announcement, set bot status
         #TODO make it only select from the pool of not recently used themes
         newDailyTheme = db.field("SELECT themeName FROM (SELECT * FROM themes ORDER BY lastUsed LIMIT 50) AS notUsed WHERE themeStatus = 1 ORDER BY RANDOM() LIMIT 1")
-        db.execute("INSERT INTO challenge (themeName, startDate, endDate) VALUES (?, ?)", newDailyTheme, datetime.utcnow().isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(hours=24)).isoformat(timespec='seconds', sep=' '))
+        db.execute("INSERT INTO challenge (themeName, startDate, endDate) VALUES (?, ?, ?)", newDailyTheme, datetime.utcnow().isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(hours=24)).isoformat(timespec='seconds', sep=' '))
         newChallengeID = db.field("SELECT challengeID, themeName FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
         db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '), newDailyTheme)
         db.execute("UPDATE currentChallenge SET currentChallengeID = ?, previousChallengeID = ? WHERE challengeTypeID = 0", newChallengeID, challengeID)
@@ -171,6 +171,7 @@ class Bot(BotBase):
     async def clear_leaderboard(self):
         msg=[]
         channel = self.get_channel(LB_CHANNEL_ID)
+        #actually 2 days ago, dont ask
         vceraj = datetime.combine(datetime.now().date() - timedelta(days=2), time(0))
         for message in await channel.history(after=vceraj).flatten():
             msg.append(message)

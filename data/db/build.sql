@@ -32,15 +32,15 @@ CREATE TABLE IF NOT EXISTS challengeTypes (
 CREATE TABLE IF NOT EXISTS themes (
     themeName text PRIMARY KEY,
     themeStatus integer DEFAULT 0,
-    lastUsed text DEFAULT '2011-11-11' NOT NULL
+    lastUsed datetime DEFAULT "2011-11-11 00:00:00"
 );
 
 CREATE TABLE IF NOT EXISTS challenge (
     challengeTypeID integer DEFAULT 0,
     themeName text NOT NULL,
     challengeID integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-    startDate text NOT NULL,
-    endDate text NOT NULL,
+    startDate datetime NOT NULL,
+    endDate datetime NOT NULL,
     FOREIGN KEY (themeName) REFERENCES themes (themeName)
     FOREIGN KEY (challengeTypeID) REFERENCES challengeTypes (challengeTypeID)
 );
@@ -58,7 +58,7 @@ INSERT OR IGNORE INTO challengeTypes (challengeTypeID, challengeTypeDescription)
 
 INSERT OR IGNORE INTO themes (themeName, themeStatus) VALUES ("placeholder", 0);
 
-INSERT OR IGNORE INTO challenge (challengeID, themeName) VALUES (0, "placeholder");
+INSERT OR IGNORE INTO challenge (challengeID, themeName, startDate, endDate) VALUES (0, "placeholder", "2011-11-11 00:00:00", "2011-11-11 00:00:00");
 
 INSERT OR IGNORE INTO currentChallenge (currentChallengeID, previousChallengeID, challengeTypeID) VALUES (0,0,0);
 

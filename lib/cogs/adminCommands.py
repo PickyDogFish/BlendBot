@@ -53,7 +53,7 @@ class Admin(Cog):
     @command(name="setused")
     async def used(self, ctx, theme):
         if ctx.author.guild_permissions.administrator:
-            db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().date().isoformat(),theme)
+            db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '),theme)
             await ctx.channel.send("Theme set to used")
 
     #setdaily <themeName> sets the daily theme to the specified themeName
@@ -63,7 +63,7 @@ class Admin(Cog):
             if db.field("SELECT * FROM themes WHERE themeName = ?", theme) != None:
                 lastDaily = db.field("SELECT challengeID FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC LIMIT 1")
                 db.execute("UPDATE challenge SET themeName = ? WHERE challengeID = ?", theme, lastDaily)
-                db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().date().isoformat(), theme)
+                db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '), theme)
                 await ctx.channel.edit(name="Theme-" + theme)
                 await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name = "you make " + theme))
             else:
@@ -100,13 +100,13 @@ class Admin(Cog):
                 for line in file:
                     db.execute("INSERT OR IGNORE INTO themes (themeName, themeStatus) VALUES (?,1)", line.strip().replace("_", " "))
 
-    async def parse_used_themes(self,ctx):
+    async def parse_used_themes(self, ctx):
         if ctx.author.guild_permissions.administrator:
             with open("D:/BotGit/usedThemes.txt", "r") as file:
                 for line in file:
-                    db.execute("INSERT OR IGNORE INTO themes (themeName, themeStatus, lastUsed) VALUES (?,1,?)", line.strip().replace("_", " "), datetime.utcnow().date().isoformat())
+                    db.execute("INSERT OR IGNORE INTO themes (themeName, themeStatus, lastUsed) VALUES (?,1,?)", line.strip().replace("_", " "), datetime.utcnow().isoformat())
     
-    async def parse_suggestions(self,ctx):
+    async def parse_suggestions(self, ctx):
         if ctx.author.guild_permissions.administrator:
             with open("D:/BotGit/suggestions.txt", "r") as file:
                 for line in file:
