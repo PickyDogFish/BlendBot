@@ -5,6 +5,7 @@ from discord import Embed
 from random import choice
 from ..db import db
 from datetime import datetime
+from math import sqrt
 
 class Fun(Cog):
     def __init__(self, bot):
@@ -33,13 +34,28 @@ class Fun(Cog):
         randomTheme = db.field("SELECT themeName FROM themes WHERE themeStatus = 1 ORDER BY RANDOM() LIMIT 1")
         await ctx.send(randomTheme)
 
+    #@command(name="help")
+    #async def show_help(self, ctx):
+    #    embeded = Embed(title="Daily blend bot help page", colour = 16754726, description = "List of commands, prefix is **$**.")
+    #    embeded.add_field(name="$help", value="Displays this help page")
+    #    embeded.add_field(name="$suggest [theme]", value="Allows you to suggest a prompt to add to the pool. Suggestions will be manually reviewed.")
+    #    embeded.add_field(name="$submit [image/video]", value="Allows you to submit your render for voting")
+    #    embeded.add_field(name="$daily", value="Tells the current daily challenge theme")
+    #    embeded.add_field(name="$random", value="Tells a random theme")
+    #    embeded.add_field(name="$time", value="Tells you how much time is left for the current daily challenge")
+    #    await ctx.send(embed = embeded)
+
     @command(name="help")
     async def show_help(self, ctx):
-        embeded = Embed(title="Daily blend bot help page", colour = 16754726, description = "Here are the user commands:")
-        embeded.add_field(name="$help", value="Displays this help page")
-        embeded.add_field(name="$daily", value="Tells you the prompt of the day")
-        embeded.add_field(name="$random", value="Gives you a random prompt from the pool")
-        embeded.add_field(name="$suggest", value="Allows you to suggest a prompt to add to the pool. These suggestions will be manually reviewed")
+        helpText = "List of commands, with the prefix **$**:\n"
+        helpText += "`$help:` Displays this help page.\n\n"
+        helpText += "`$suggest [theme]:` Allows you to suggest a prompt to add to the pool. Suggestions will be manually reviewed.\n\n"
+        helpText += "`$submit [image/video]:` Allows you to submit your render for voting.\n\n"
+        helpText += "`$daily:` Tells the current daily challenge theme.\n\n"
+        helpText += "`$random:` Tells a random theme.\n\n"
+        helpText += "`$time:` Tells you how much time is left for the current daily challenge.\n\n"
+        helpText += "`$level:` Tells you how much time you have spent on this server.\n\n"
+        embeded = Embed(title="Daily blend bot help page", colour = 16754726, description = helpText)
         await ctx.send(embed = embeded)
 
     @command(name="submit")
@@ -65,7 +81,39 @@ class Fun(Cog):
         nekimin = 60 - now.minute
         await ctx.send("You have " + str(nekiure) + " hours and " + str(nekimin) + " minutes left!")
 
-            
+    @command(name="level")
+    async def show_level(self,ctx):
+        msgXP, renderXP = db.record("SELECT msgXP, renderXP FROM users WHERE userID = ?", ctx.author.id)
+        (renderLvl, renderProgress) = await self.calculate_render_level(renderXP)
+        (msgLevel, msgProgress) = await self.calculate_msg_level(msgXP)
+        string = ""
+        msgstring = ""
+        for i in range(1, 10, 1):
+            if i <= renderProgress:
+                string += ":green_square:"
+            else:
+                string += ":white_small_square:"
+        for i in range(1, 10, 1):
+            if i <= msgProgress:
+                msgstring += ":green_square:"
+            else:
+                msgstring += ":white_small_square:"
+
+        embeded = Embed(colour = 16754726, description = "** Render level: " + str(renderLvl) + "\n\n" + string + "\n\nMessage level: " + str(msgLevel) + "\n\n" + msgstring + "**")
+        embeded.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
+        await ctx.send(embed=embeded)
+
+    async def calculate_render_level(self, xp):
+        level = 0
+        step = 20
+        while xp-step >= 0:
+            xp = xp-step
+            level += 1
+            step += 6
+        return (level, int(xp/step * 10))
+
+    async def calculate_msg_level(self,xp):
+        return (int(sqrt(xp*10)//10), sqrt(xp*10)%10)
 
     @Cog.listener()
     async def on_ready(self):
