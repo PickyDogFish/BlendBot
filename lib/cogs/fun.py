@@ -84,7 +84,8 @@ class Fun(Cog):
     @command(name="level")
     async def show_level(self,ctx):
         msgXP, renderXP = db.record("SELECT msgXP, renderXP FROM users WHERE userID = ?", ctx.author.id)
-        (renderLvl, renderProgress) = await self.calculate_render_level(renderXP)
+        (renderLvl, renderLeftoverXP, renderStep) = await self.calculate_render_level(renderXP)
+        renderProgress = int(renderLeftoverXP/renderStep * 10)
         (msgLevel, msgProgress) = await self.calculate_msg_level(msgXP)
         string = ""
         msgstring = ""
@@ -99,7 +100,7 @@ class Fun(Cog):
             else:
                 msgstring += ":white_small_square:"
 
-        embeded = Embed(colour = 16754726, description = "** Render level: " + str(renderLvl) + "\n\n" + string + "\n\nMessage level: " + str(msgLevel) + "\n\n" + msgstring + "**")
+        embeded = Embed(colour = 0x6EA252, description = "Render level: **" + str(renderLvl) + "**⠀⠀⠀*" + str(renderLeftoverXP) + "/" + str(renderStep) + "*\n\n" + string)
         embeded.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
         await ctx.send(embed=embeded)
 
@@ -110,7 +111,7 @@ class Fun(Cog):
             xp = xp-step
             level += 1
             step += 6
-        return (level, int(xp/step * 10))
+        return (level, xp, step)
 
     async def calculate_msg_level(self,xp):
         return (int(sqrt(xp*10)//10), sqrt(xp*10)%10)
