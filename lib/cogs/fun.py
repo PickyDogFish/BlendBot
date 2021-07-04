@@ -2,10 +2,13 @@ from lib.bot import SUBMIT_CHANNEL_ID
 from discord.ext.commands import Cog
 from discord.ext.commands import command
 from discord import Embed
+import discord
 from random import choice
 from ..db import db
 from datetime import datetime
 from math import sqrt
+
+from PIL import Image, ImageDraw, ImageFont
 
 class Fun(Cog):
     def __init__(self, bot):
@@ -115,6 +118,38 @@ class Fun(Cog):
 
     async def calculate_msg_level(self,xp):
         return (int(sqrt(xp*10)//10), sqrt(xp*10)%10)
+
+
+    @command(name="img")
+    async def make_level_image(self, ctx):
+        renderXP = db.field("SELECT renderXP FROM users WHERE userID = ?", ctx.author.id)
+        (renderLvl, renderLeftoverXP, renderStep) = await self.calculate_render_level(renderXP)
+        renderProgress = int(renderLeftoverXP/renderStep * 10) + 1 
+
+        img = Image.new('RGB', (480, 148), color = (30, 30, 30))
+        await ctx.author.avatar_url_as(format="png", size=128).save(fp="img/pfp.png")
+        pfp = Image.open("img/pfp.png", "r")
+        img.paste(pfp, (10,10))
+
+        fnt = ImageFont.truetype('C:\Windows\Fonts\Arial.ttf', 40)
+        d = ImageDraw.Draw(img)
+        d.text((148,10), ctx.author.name, font=fnt, fill=(230, 230, 230))
+        small_fnt = ImageFont.truetype('C:\Windows\Fonts\Arial.ttf', 20)
+        d.text((148,115), "Rank:           xp: ", font=small_fnt, fill=(230, 230, 230))
+        d.text((210,107), "#2       " + str(renderLeftoverXP) + "/" + str(renderStep), font=ImageFont.truetype('C:\Windows\Fonts\Arial.ttf', 30), fill=(230, 230, 230))
+
+        xpBarX = 148
+        for i in range(0, renderProgress):
+            d.rectangle((xpBarX, 65, xpBarX+20, 95), fill='lightblue')
+            xpBarX += 25
+            
+
+
+        img.save('img/level.png')
+        with open('img/level.png', 'rb') as f:
+            pic = discord.File(f)
+            await ctx.send(file=pic)
+
 
     @Cog.listener()
     async def on_ready(self):
