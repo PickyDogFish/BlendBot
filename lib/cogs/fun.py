@@ -84,7 +84,7 @@ class Fun(Cog):
         nekimin = 60 - now.minute
         await ctx.send("You have " + str(nekiure) + " hours and " + str(nekimin) + " minutes left!")
 
-    @command(name="level")
+    @command(name="oldlevel")
     async def show_level(self,ctx):
         msgXP, renderXP = db.record("SELECT msgXP, renderXP FROM users WHERE userID = ?", ctx.author.id)
         (renderLvl, renderLeftoverXP, renderStep) = await self.calculate_render_level(renderXP)
@@ -120,7 +120,7 @@ class Fun(Cog):
         return (int(sqrt(xp*10)//10), sqrt(xp*10)%10)
 
 
-    @command(name="img")
+    @command(name="level")
     async def make_level_image(self, ctx):
         renderXP = db.field("SELECT renderXP FROM users WHERE userID = ?", ctx.author.id)
         (renderLvl, renderLeftoverXP, renderStep) = await self.calculate_render_level(renderXP)
@@ -133,15 +133,22 @@ class Fun(Cog):
 
         fnt = ImageFont.truetype('fonts/arial.ttf', 40)
         d = ImageDraw.Draw(img)
-        d.text((148,10), ctx.author.name, font=fnt, fill=(230, 230, 230))
+        d.text((148,10), ctx.author.name, font=ImageFont.truetype('fonts/arial.ttf', 30), fill=(230, 230, 230))
         small_fnt = ImageFont.truetype('fonts/arial.ttf', 20)
-        d.text((148,115), "Rank:           xp: ", font=small_fnt, fill=(230, 230, 230))
-        d.text((210,107), "#2       " + str(renderLeftoverXP) + "/" + str(renderStep), font=ImageFont.truetype('fonts/arial.ttf', 30), fill=(230, 230, 230))
+        place = db.field("SELECT COUNT(userID) FROM users WHERE renderXP >= ?", renderXP)
+        d.text((148,115), "Rank:            lvl:        xp: ", font=small_fnt, fill=(230, 230, 230))
+        d.text((210,107), "#" + str(place), font=ImageFont.truetype('fonts/arial.ttf', 30), fill=(230, 230, 230))
+        d.text((375,107), str(renderLeftoverXP) + "/" + str(renderStep) + "       " , font=ImageFont.truetype('fonts/arial.ttf', 30), fill=(230, 230, 230))
+        d.text((300,107), str(renderLvl), font=ImageFont.truetype('fonts/arial.ttf', 30), fill=(230, 230, 230))
 
+        
+        d.rectangle((145, 57, 396, 93), fill=(50,50,50))
+        
         xpBarX = 148
         for i in range(0, renderProgress):
-            d.rectangle((xpBarX, 65, xpBarX+20, 95), fill='lightblue')
+            d.rectangle((xpBarX, 60, xpBarX+20, 90), fill='lightblue')
             xpBarX += 25
+
             
 
 

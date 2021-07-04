@@ -11,12 +11,17 @@ from math import sqrt
 
 from ..db import db
 
+testing = False
+
 PREFIX = "$"
 OWNER_IDS = [176764856513462272]
-COGS = [path.split("/")[-1][:-3] for path in glob("./lib/cogs/*.py")]
+COGS=[]
+if testing:
+    COGS = [path.split("\\")[-1][:-3] for path in glob("./lib/cogs/*.py")]
+else:
+    COGS = [path.split("/")[-1][:-3] for path in glob("./lib/cogs/*.py")]
 print(COGS)
 
-testing = False
 
 GENERAL_CHANNEL_ID = 831137325877690421
 SUBMIT_CHANNEL_ID = 831214167897276446
