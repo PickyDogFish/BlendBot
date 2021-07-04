@@ -136,7 +136,7 @@ class Fun(Cog):
         d.text((148,10), ctx.author.name, font=fnt, fill=(230, 230, 230))
         small_fnt = ImageFont.truetype('fonts/arial.ttf', 20)
         d.text((148,115), "Rank:           xp: ", font=small_fnt, fill=(230, 230, 230))
-        d.text((210,107), "#2       " + str(renderLeftoverXP) + "/" + str(renderStep), font=ImageFont.truetype('C:\Windows\Fonts\Arial.ttf', 30), fill=(230, 230, 230))
+        d.text((210,107), "#2       " + str(renderLeftoverXP) + "/" + str(renderStep), font=ImageFont.truetype('fonts/arial.ttf', 30), fill=(230, 230, 230))
 
         xpBarX = 148
         for i in range(0, renderProgress):
