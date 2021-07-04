@@ -62,7 +62,7 @@ class Admin(Cog):
     async def setdaily(self, ctx, theme):
         if ctx.author.guild_permissions.administrator:
             if db.field("SELECT * FROM themes WHERE themeName = ?", theme) != None:
-                lastDaily = db.field("SELECT challengeID FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC LIMIT 1")
+                lastDaily = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0")
                 db.execute("UPDATE challenge SET themeName = ? WHERE challengeID = ?", theme, lastDaily)
                 db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '), theme)
                 await self.bot.get_channel(831214167897276446).edit(name="Theme-" + theme)
