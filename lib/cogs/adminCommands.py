@@ -6,6 +6,7 @@ from discord.ext.commands import command
 from ..db import db
 from datetime import date, datetime, timedelta
 import json
+from lib.bot import SUBMIT_CHANNEL_ID
 
 class Admin(Cog):
     def __init__(self, bot):
@@ -64,7 +65,8 @@ class Admin(Cog):
                 lastDaily = db.field("SELECT challengeID FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC LIMIT 1")
                 db.execute("UPDATE challenge SET themeName = ? WHERE challengeID = ?", theme, lastDaily)
                 db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '), theme)
-                await ctx.channel.edit(name="Theme-" + theme)
+                await self.bot.get_channel(831214167897276446).edit(name="Theme-" + theme)
+                #await ctx.channel.edit(name="Theme-" + theme)
                 await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name = "you make " + theme))
             else:
                 await ctx.channel.send("Theme not in pool")
