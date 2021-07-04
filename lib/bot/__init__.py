@@ -13,8 +13,8 @@ from ..db import db
 
 PREFIX = "$"
 OWNER_IDS = [176764856513462272]
-COGS = [path.split("\\")[-1][:-3] for path in glob("./lib/cogs/*.py")]
-
+COGS = [path.split("/")[-1][:-3] for path in glob("./lib/cogs/*.py")]
+print(COGS)
 
 testing = False
 
