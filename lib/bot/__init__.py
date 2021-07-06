@@ -14,7 +14,7 @@ from ..db import db
 testing = False
 
 PREFIX = "$"
-OWNER_IDS = [176764856513462272]
+OWNER_IDS = [176764856513462272, 261049658569129984]
 COGS=[]
 if testing:
     COGS = [path.split("\\")[-1][:-3] for path in glob("./lib/cogs/*.py")]
@@ -171,6 +171,8 @@ class Bot(BotBase):
             self.guild = self.get_guild(831137325299138621)
             self.scheduler.add_job(self.daily_challenge, CronTrigger(hour=6, minute=0))
             self.scheduler.start()
+            lastTheme = db.field("SELECT themeName FROM challenge WHERE challengeID = (SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0)")
+            await self.change_presence(activity=Activity(type=ActivityType.watching, name = "you make " + lastTheme))
 
             self.ready = True
             print("bot ready")
