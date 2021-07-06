@@ -32,9 +32,10 @@ BOT_TESTING_CHANNEL_ID = 833376293969723452
 TODO_CHANNEL_ID = 832203986575818802
 
 if testing:
-    GENERAL_CHANNEL_ID = BOT_TESTING_CHANNEL_ID
-    SUBMIT_CHANNEL_ID = BOT_TESTING_CHANNEL_ID
-    VOTING_CHANNEL_ID = TODO_CHANNEL_ID
+    GENERAL_CHANNEL_ID = 835427910201507860
+    SUBMIT_CHANNEL_ID = 835429505257963550
+    VOTING_CHANNEL_ID = 835429490464129054
+    LB_CHANNEL_ID = 857997935244869652
 
 
 #testing server ids
@@ -85,12 +86,16 @@ class Bot(BotBase):
         #just double checking if the embed is still there
         if msg.attachments:
             f = msg.attachments[0].url
-            embeded = Embed(title="Has collected 0 votes", colour = 0x5965F2)
-            embeded.set_author(name = self.get_user(userID).display_name, icon_url=self.get_user(userID).avatar_url)
-            embeded.set_image(url=f)
-            message = await self.get_channel(VOTING_CHANNEL_ID).send(embed = embeded)
-            #attach = await msg.attachments[0].to_file()
-            #message = await self.get_channel(VOTING_CHANNEL_ID).send("Todays submission by " + self.get_user(userID).display_name + ":", file = attach)
+            format = f.split(".")[-1]
+            if format in ["png", "jpg"]:
+                embeded = Embed(title="Has collected 0 votes", colour = 0x5965F2)
+                embeded.set_author(name = self.get_user(userID).display_name, icon_url=self.get_user(userID).avatar_url)
+                embeded.set_image(url=f)
+                message = await self.get_channel(VOTING_CHANNEL_ID).send(embed = embeded)
+            else:
+                #attachment is a video
+                attach = await msg.attachments[0].to_file()
+                message = await self.get_channel(VOTING_CHANNEL_ID).send(self.get_user(userID).display_name + ": 0 votes", file = attach)
             await message.add_reaction("1️⃣")
             await message.add_reaction("2️⃣")
             await message.add_reaction("3️⃣")
@@ -196,8 +201,10 @@ class Bot(BotBase):
         channel = self.get_channel(LB_CHANNEL_ID)
         #actually 2 days ago, dont ask
         vceraj = datetime.combine(datetime.now().date() - timedelta(days=2), time(0))
-        for message in await channel.history(after=vceraj).flatten():
-            msg.append(message)
-        await channel.delete_messages(msg)
+        msgHistory = channel.history(after=vceraj)
+        if msgHistory != None:
+            for message in await msgHistory.flatten():
+                msg.append(message)
+            await channel.delete_messages(msg)
 
 bot = Bot()

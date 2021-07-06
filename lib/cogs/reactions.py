@@ -39,12 +39,18 @@ class Reactions(Cog):
                 #updating the number of votes
                 if newVote:
                     oldMessage = await self.bot.get_channel(VOTING_CHANNEL_ID).fetch_message(payload.message_id)
-                    oldEmbed = oldMessage.embeds[0]
                     numOfVotes = db.field("SELECT COUNT(voterID) FROM votes WHERE votingMsgID = ?", payload.message_id)
-                    embeded = Embed(title="Has collected " + str(numOfVotes) + " votes", colour = 0x5965F2)
-                    embeded.set_author(name=oldEmbed.author.name, icon_url=oldEmbed.author.icon_url)
-                    embeded.set_image(url=oldEmbed.image.url)
-                    await oldMessage.edit(embed = embeded)
+                    if oldMessage.embeds:
+                        oldEmbed = oldMessage.embeds[0]
+                        embeded = Embed(title="Has collected " + str(numOfVotes) + " votes", colour = 0x5965F2)
+                        embeded.set_author(name=oldEmbed.author.name, icon_url=oldEmbed.author.icon_url)
+                        embeded.set_image(url=oldEmbed.image.url)
+                        await oldMessage.edit(embed = embeded)
+                    else:
+                        #message has video, so isnt an embed
+                        print("no embed:video")
+                        attach = await oldMessage.attachments[0].to_file()
+                        await oldMessage.edit(content="Submission by " + self.bot.get_user(payload.user_id).display_name +": " + str(numOfVotes) + " votes")
             channel = self.bot.get_channel(payload.channel_id)
             user = self.bot.get_user(payload.user_id)
             msg = await channel.fetch_message(payload.message_id)
