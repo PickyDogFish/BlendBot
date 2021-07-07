@@ -95,7 +95,10 @@ class Bot(BotBase):
             else:
                 #attachment is a video
                 attach = await msg.attachments[0].to_file()
-                message = await self.get_channel(VOTING_CHANNEL_ID).send(self.get_user(userID).display_name + ": 0 votes", file = attach)
+                embeded = Embed(title="Has collected 0 votes", colour = 0x5965F2)
+                embeded.set_author(name = self.get_user(userID).display_name, icon_url=self.get_user(userID).avatar_url)
+                message = await self.get_channel(VOTING_CHANNEL_ID).send(embed=embeded)
+                await self.get_channel(VOTING_CHANNEL_ID).send(file = attach)
             await message.add_reaction("1️⃣")
             await message.add_reaction("2️⃣")
             await message.add_reaction("3️⃣")
