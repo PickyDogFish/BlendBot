@@ -46,11 +46,6 @@ class Reactions(Cog):
                         embeded.set_author(name=oldEmbed.author.name, icon_url=oldEmbed.author.icon_url)
                         embeded.set_image(url=oldEmbed.image.url)
                         await oldMessage.edit(embed = embeded)
-                    else:
-                        #message has video, so isnt an embed
-                        print("no embed:video")
-                        attach = await oldMessage.attachments[0].to_file()
-                        await oldMessage.edit(content="Submission by " + self.bot.get_user(payload.user_id).display_name +": " + str(numOfVotes) + " votes")
             channel = self.bot.get_channel(payload.channel_id)
             user = self.bot.get_user(payload.user_id)
             msg = await channel.fetch_message(payload.message_id)
