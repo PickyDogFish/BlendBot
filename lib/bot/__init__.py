@@ -81,6 +81,7 @@ class Bot(BotBase):
         return db.field("SELECT themeName FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
 
     async def move_to_voting(self, msgID, userID):
+        print("in move to voting" + str(msgID) + "  " + str(userID))
         channel = self.get_channel(SUBMIT_CHANNEL_ID)
         msg = await channel.fetch_message(msgID)
         #just double checking if the embed is still there
@@ -131,7 +132,7 @@ class Bot(BotBase):
         if db.record("SELECT userID, msgID FROM submission WHERE challengeID = ?", challengeID) != None:
             subs = db.records("SELECT userID, msgID FROM submission WHERE challengeID = ?", challengeID)
             for userID, msgID in subs:
-                msgID, userID = db.record("SELECT msgID, userID FROM submission WHERE challengeID = ?", challengeID)
+                print("in daily " + str(msgID) + "  " + str(userID))
                 votingMsgID = await self.move_to_voting(msgID, userID)
                 db.execute("UPDATE submission SET votingMsgID = ? WHERE msgID = ?", votingMsgID, msgID)
         else:
