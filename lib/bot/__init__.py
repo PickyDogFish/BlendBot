@@ -81,7 +81,6 @@ class Bot(BotBase):
         return db.field("SELECT themeName FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
 
     async def move_to_voting(self, msgID, userID):
-        print("in move to voting" + str(msgID) + "  " + str(userID))
         channel = self.get_channel(SUBMIT_CHANNEL_ID)
         msg = await channel.fetch_message(msgID)
         #just double checking if the embed is still there
@@ -93,13 +92,18 @@ class Bot(BotBase):
                 embeded.set_author(name = self.get_user(userID).display_name, icon_url=self.get_user(userID).avatar_url)
                 embeded.set_image(url=f)
                 message = await self.get_channel(VOTING_CHANNEL_ID).send(embed = embeded)
+
             else:
                 #attachment is a video
                 attach = await msg.attachments[0].to_file()
                 embeded = Embed(title="Has collected 0 votes", colour = 0x5965F2)
                 embeded.set_author(name = self.get_user(userID).display_name, icon_url=self.get_user(userID).avatar_url)
                 message = await self.get_channel(VOTING_CHANNEL_ID).send(embed=embeded)
-                await self.get_channel(VOTING_CHANNEL_ID).send(file = attach)
+                try:
+                    await self.get_channel(VOTING_CHANNEL_ID).send(file = attach)
+                except:
+                    print("error while moving video, possibly file too big")
+                    await self.get_channel(VOTING_CHANNEL_ID).send(embed = Embed(colour = 0x5965F2, title="Could not move the submission.", description=f"[Link to original message]({msg.jump_url})"))
             await message.add_reaction("1️⃣")
             await message.add_reaction("2️⃣")
             await message.add_reaction("3️⃣")
@@ -130,9 +134,10 @@ class Bot(BotBase):
         #move things to voting
         themeName = db.field("SELECT themeName FROM challenge WHERE challengeID = ?", challengeID)
         if db.record("SELECT userID, msgID FROM submission WHERE challengeID = ?", challengeID) != None:
+            preSubEmbed = Embed(colour = 0x5965F2, title="Submissions for the theme " + themeName)
+            await self.get_channel(VOTING_CHANNEL_ID).send(embed=preSubEmbed)
             subs = db.records("SELECT userID, msgID FROM submission WHERE challengeID = ?", challengeID)
             for userID, msgID in subs:
-                print("in daily " + str(msgID) + "  " + str(userID))
                 votingMsgID = await self.move_to_voting(msgID, userID)
                 db.execute("UPDATE submission SET votingMsgID = ? WHERE msgID = ?", votingMsgID, msgID)
         else:
