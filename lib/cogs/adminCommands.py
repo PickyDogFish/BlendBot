@@ -34,32 +34,32 @@ class Admin(Cog):
             sys.exit()
 
     @command(name="reject")
-    async def reject(self, ctx, theme):
+    async def reject(self, ctx, *, theme):
         if ctx.author.guild_permissions.administrator:
             db.execute("UPDATE themes SET themeStatus = -1 WHERE themeName = ?", theme)
             await ctx.channel.send("Theme status set to rejected")
 
     @command(name="approve")
-    async def approve(self, ctx, theme):
+    async def approve(self, ctx, *, theme):
         if ctx.author.guild_permissions.administrator:
             db.execute("UPDATE themes SET themeStatus = 1 WHERE themeName = ?", theme)
             await ctx.send("Theme status set to approved")
 
     @command(name="setnotused", aliases = ["setunused"])
-    async def not_used(self, ctx, theme):
+    async def not_used(self, ctx, *, theme):
         if ctx.author.guild_permissions.administrator:
             db.execute("UPDATE themes SET lastUsed = '2011-11-11 11:11:11' WHERE themeName = ?", theme)
             await ctx.channel.send("Theme set to not used")
     
     @command(name="setused")
-    async def used(self, ctx, theme):
+    async def used(self, ctx, *, theme):
         if ctx.author.guild_permissions.administrator:
             db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '),theme)
             await ctx.channel.send("Theme set to used")
 
     #setdaily <themeName> sets the daily theme to the specified themeName
     @command(name="setdaily")
-    async def setdaily(self, ctx, theme):
+    async def setdaily(self, ctx, *, theme):
         if ctx.author.guild_permissions.administrator:
             if db.field("SELECT * FROM themes WHERE themeName = ?", theme) != None:
                 lastDaily = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0")
