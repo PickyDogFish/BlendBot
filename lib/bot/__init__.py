@@ -11,7 +11,7 @@ from math import sqrt
 
 from ..db import db
 
-testing = True
+testing = False
 
 PREFIX = "$"
 OWNER_IDS = [176764856513462272, 261049658569129984]
