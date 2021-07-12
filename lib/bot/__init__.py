@@ -11,7 +11,7 @@ from math import sqrt
 
 from ..db import db
 
-testing = False
+testing = True
 
 PREFIX = "$"
 OWNER_IDS = [176764856513462272, 261049658569129984]
@@ -196,7 +196,7 @@ class Bot(BotBase):
             await self.daily_challenge()
 
     async def make_leaderboard(self):
-        scores = db.records("SELECT userID, renderXP FROM users ORDER BY renderXP DESC LIMIT 10")
+        scores = db.records("SELECT userID, renderXP FROM users ORDER BY renderXP DESC LIMIT 100")
         for score in scores:
             user = self.get_user(score[0])
             if user == None:
@@ -210,9 +210,7 @@ class Bot(BotBase):
     async def clear_leaderboard(self):
         msg=[]
         channel = self.get_channel(LB_CHANNEL_ID)
-        #actually 2 days ago, dont ask
-        vceraj = datetime.combine(datetime.now().date() - timedelta(days=2), time(0))
-        msgHistory = channel.history(after=vceraj)
+        msgHistory = channel.history(limit = 100)
         if msgHistory != None:
             for message in await msgHistory.flatten():
                 msg.append(message)

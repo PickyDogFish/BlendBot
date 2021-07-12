@@ -3,6 +3,7 @@ import sys
 import discord
 from discord.ext.commands import Cog
 from discord.ext.commands import command
+from discord.ext.commands.core import cooldown
 from ..db import db
 from datetime import date, datetime, timedelta
 import json
@@ -135,6 +136,12 @@ class Admin(Cog):
         if ctx.author.guild_permissions.administrator:
             listOfRejected = db.column("SELECT themeName FROM themes WHERE themeStatus = 1 LIMIT 100")
             await ctx.send(listOfRejected)
+
+    @command(name="makelb")
+    async def show_leaderboard(self, ctx):
+        await self.bot.clear_leaderboard()
+        await self.bot.make_leaderboard()
+
 
 def setup(bot):
     bot.add_cog(Admin(bot))
