@@ -196,7 +196,7 @@ class Bot(BotBase):
             await self.daily_challenge()
 
     async def make_leaderboard(self):
-        scores = db.records("SELECT userID, renderXP FROM users ORDER BY renderXP DESC LIMIT 100")
+        scores = db.records("SELECT userID, renderXP FROM users WHERE renderXP > 0 ORDER BY renderXP DESC LIMIT 100")
         for score in scores:
             user = self.get_user(score[0])
             if user == None:
