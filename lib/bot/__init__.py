@@ -9,6 +9,7 @@ from discord.ext.commands import CommandNotFound
 from discord.ext.commands.errors import CommandNotFound
 from math import sqrt
 import discord
+from discord.utils import get
 
 from ..db import db
 
@@ -23,9 +24,8 @@ if testing:
     COGS = [path.split("\\")[-1][:-3] for path in glob("./lib/cogs/*.py")]
 else:
     COGS = [path.split("/")[-1][:-3] for path in glob("./lib/cogs/*.py")]
-print(COGS)
 
-
+GUILD_ID = 831137325299138621
 GENERAL_CHANNEL_ID = 831137325877690421
 SUBMIT_CHANNEL_ID = 831214167897276446
 VOTING_CHANNEL_ID = 831479996878946354
@@ -39,6 +39,7 @@ if testing:
     SUBMIT_CHANNEL_ID = 835429505257963550
     VOTING_CHANNEL_ID = 835429490464129054
     LB_CHANNEL_ID = 857997935244869652
+    GUILD_ID = 835427909724143617
 
 
 #testing server ids
@@ -125,6 +126,9 @@ class Bot(BotBase):
         for submission in scores:
             isSubmission = True
             voteCountText += self.get_user(submission[0]).display_name + " collected " + str(submission[3]) + " points\n"
+            if db.field("SELECT renderXP FROM users WHERE userID = ?", submission[0]) == 0:
+                role = get(self.guild.roles, name="Daily Wizard")
+                await self.get_guild(GUILD_ID).get_member(submission[0]).add_roles(role)
             db.execute("UPDATE users SET renderXP = renderXP + ? WHERE userID = ?", submission[3], submission[0])
         
         if isSubmission:
@@ -180,7 +184,7 @@ class Bot(BotBase):
 
     async def on_ready(self):
         if not self.ready:
-            self.guild = self.get_guild(831137325299138621)
+            self.guild = self.get_guild(GUILD_ID)
             self.scheduler.add_job(self.daily_challenge, CronTrigger(hour=6, minute=0))
             self.scheduler.start()
             lastTheme = db.field("SELECT themeName FROM challenge WHERE challengeID = (SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0)")
