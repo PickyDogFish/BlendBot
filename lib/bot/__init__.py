@@ -242,6 +242,7 @@ class Bot(BotBase):
         if placeWidth < 90:
             d.text((656 - placeWidth/2,-10), str(place), font=ImageFont.truetype('fonts/arial.ttf', 128), fill=(0, 0, 0))
         else:
+            placeWidth, placeHeight = d.textsize(str(place), font=ImageFont.truetype('fonts/arial.ttf', 90))
             d.text((656 - placeWidth/2,9), str(place), font=ImageFont.truetype('fonts/arial.ttf', 90), fill=(0, 0, 0))
 
         img.save('img/lb.png')
