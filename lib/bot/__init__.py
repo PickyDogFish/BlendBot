@@ -8,10 +8,13 @@ from discord.ext.commands import Bot as BotBase
 from discord.ext.commands import CommandNotFound
 from discord.ext.commands.errors import CommandNotFound
 from math import sqrt
+import discord
 
 from ..db import db
 
-testing = False
+from PIL import Image, ImageDraw, ImageFont
+
+testing = True
 
 PREFIX = "$"
 OWNER_IDS = [176764856513462272, 261049658569129984]
@@ -202,10 +205,11 @@ class Bot(BotBase):
             if user == None:
                 print("User not in the server anymore.")
             else:
-                text = "Number of points: " + str(score[1]) + "   Level: " + str(int(sqrt(score[1]*40)//10)) + "\n\n"
-                embed = Embed(colour = 0xFF0000, title=text)
-                embed.set_author(name = user.display_name, icon_url=user.avatar_url)
-                await self.get_channel(LB_CHANNEL_ID).send(embed=embed)
+                await self.show_lb_card(score[0])
+                #text = "Number of points: " + str(score[1]) + "   Level: " + str(int(sqrt(score[1]*40)//10)) + "\n\n"
+                #embed = Embed(colour = 0xFF0000, title=text)
+                #embed.set_author(name = user.display_name, icon_url=user.avatar_url)
+                #await self.get_channel(LB_CHANNEL_ID).send(embed=embed)
 
     async def clear_leaderboard(self):
         msg=[]
@@ -215,5 +219,34 @@ class Bot(BotBase):
             for message in await msgHistory.flatten():
                 msg.append(message)
             await channel.delete_messages(msg)
+
+    async def show_lb_card(self, userID):
+        renderXP = db.field("SELECT renderXP FROM users WHERE userID = ?", userID)
+        place = db.field("SELECT COUNT(userID) FROM users WHERE renderXP >= ?", renderXP)
+
+        curUser = self.get_user(userID)
+
+        img = Image.new('RGB', (720, 128), color = (30, 30, 30))
+        await curUser.avatar_url_as(format="png", size=128).save(fp="img/pfp.png")
+        pfp = Image.open("img/pfp.png", "r")
+        img.paste(pfp, (0,0))
+
+        d = ImageDraw.Draw(img)
+        nameWidth, nameHeight = d.textsize(curUser.name, font=ImageFont.truetype('fonts/arial.ttf', 64))
+        if nameWidth < 464: 
+            d.text((138,30), curUser.name, font=ImageFont.truetype('fonts/arial.ttf', 64), fill=(200, 200, 200))
+        else:
+            d.text((138,30), curUser.name[0:12] + "...", font=ImageFont.truetype('fonts/arial.ttf', 60), fill=(200, 200, 200))
+        d.rectangle((592,0, 720, 128), fill=(200, 200, 0))
+        placeWidth, placeHeight = d.textsize(str(place), font=ImageFont.truetype('fonts/arial.ttf', 128))
+        if placeWidth < 90:
+            d.text((656 - placeWidth/2,-10), str(place), font=ImageFont.truetype('fonts/arial.ttf', 128), fill=(0, 0, 0))
+        else:
+            d.text((656 - placeWidth/2,9), str(place), font=ImageFont.truetype('fonts/arial.ttf', 90), fill=(0, 0, 0))
+
+        img.save('img/lb.png')
+        with open('img/lb.png', 'rb') as f:
+            pic = discord.File(f)
+            await self.get_channel(LB_CHANNEL_ID).send(file=pic)
 
 bot = Bot()
