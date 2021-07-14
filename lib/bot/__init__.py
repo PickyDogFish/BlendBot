@@ -33,6 +33,7 @@ LB_CHANNEL_ID = 838703644026339338
 WELCOME_CHANNEL_ID = 831849610426580992
 BOT_TESTING_CHANNEL_ID = 833376293969723452
 TODO_CHANNEL_ID = 832203986575818802
+LOG_CHANNEL_ID = 864912275864158218
 
 if testing:
     GENERAL_CHANNEL_ID = 835427910201507860
@@ -40,6 +41,7 @@ if testing:
     VOTING_CHANNEL_ID = 835429490464129054
     LB_CHANNEL_ID = 857997935244869652
     GUILD_ID = 835427909724143617
+    LOG_CHANNEL_ID = 864911454628741160 
 
 
 #testing server ids
@@ -167,9 +169,14 @@ class Bot(BotBase):
         print("Bot disconnected")
 
     async def on_connect(self):
+        try:
+            await self.get_channel(LOG_CHANNEL_ID).send("Bot connected.")
+        except:
+            print("couldnt send on connect message")
         print("Bot connected")
 
     async def on_error(self, err, *args, **kwargs):
+        await self.get_channel(LOG_CHANNEL_ID).send("** <@176764856513462272> " + str(err) + ":   " + str(args) + "**")
         if err == "on_command_error":
             await args[0].send("Something went wrong.")
         raise
@@ -191,8 +198,14 @@ class Bot(BotBase):
             await self.change_presence(activity=Activity(type=ActivityType.watching, name = "you make " + lastTheme))
 
             self.ready = True
+
+            await self.get_channel(LOG_CHANNEL_ID).send("Bot ready.")
             print("bot ready")
         else:
+            lastTheme = db.field("SELECT themeName FROM challenge WHERE challengeID = (SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0)")
+            await self.change_presence(activity=Activity(type=ActivityType.watching, name = "you make " + lastTheme))
+
+            await self.get_channel(LOG_CHANNEL_ID).send("Bot ready after reconnect.")
             print("bot reconnected")
 
     async def on_message(self, message):
