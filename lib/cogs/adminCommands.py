@@ -7,7 +7,7 @@ from discord.ext.commands.core import cooldown
 from ..db import db
 from datetime import date, datetime, timedelta
 import json
-from lib.bot import SUBMIT_CHANNEL_ID
+from lib.bot import LOG_CHANNEL_ID, SUBMIT_CHANNEL_ID
 
 class Admin(Cog):
     def __init__(self, bot):
@@ -37,26 +37,38 @@ class Admin(Cog):
     @command(name="reject")
     async def reject(self, ctx, *, theme):
         if ctx.author.guild_permissions.administrator:
-            db.execute("UPDATE themes SET themeStatus = -1 WHERE themeName = ?", theme)
-            await ctx.channel.send("Theme status set to rejected")
+            if db.field("SELECT * FROM themes WHERE themeName = ?", theme) != None:
+                db.execute("UPDATE themes SET themeStatus = -1 WHERE themeName = ?", theme)
+                await ctx.send("Theme status set to rejected")
+            else:
+                await ctx.send("Theme not found.")
 
     @command(name="approve")
     async def approve(self, ctx, *, theme):
         if ctx.author.guild_permissions.administrator:
-            db.execute("UPDATE themes SET themeStatus = 1 WHERE themeName = ?", theme)
-            await ctx.send("Theme status set to approved")
+            if db.field("SELECT * FROM themes WHERE themeName = ?", theme) != None:
+                db.execute("UPDATE themes SET themeStatus = 1 WHERE themeName = ?", theme)
+                await ctx.send("Theme status set to approved")
+            else:
+                await ctx.send("Theme not found.")
 
     @command(name="setnotused", aliases = ["setunused"])
     async def not_used(self, ctx, *, theme):
         if ctx.author.guild_permissions.administrator:
-            db.execute("UPDATE themes SET lastUsed = '2011-11-11 11:11:11' WHERE themeName = ?", theme)
-            await ctx.channel.send("Theme set to not used")
+            if db.field("SELECT * FROM themes WHERE themeName = ?", theme) != None:
+                db.execute("UPDATE themes SET lastUsed = '2011-11-11 11:11:11' WHERE themeName = ?", theme)
+                await ctx.send("Theme set to not used")
+            else:
+                await ctx.send("Theme not found.")
     
     @command(name="setused")
     async def used(self, ctx, *, theme):
         if ctx.author.guild_permissions.administrator:
-            db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '),theme)
-            await ctx.channel.send("Theme set to used")
+            if db.field("SELECT * FROM themes WHERE themeName = ?", theme) != None:
+                db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '),theme)
+                await ctx.send("Theme set to used")
+            else:
+                await ctx.send("Theme not found.")
 
     #setdaily <themeName> sets the daily theme to the specified themeName
     @command(name="setdaily")
@@ -66,7 +78,7 @@ class Admin(Cog):
                 lastDaily = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0")
                 db.execute("UPDATE challenge SET themeName = ? WHERE challengeID = ?", theme, lastDaily)
                 db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '), theme)
-                await self.bot.get_channel(831214167897276446).edit(name="Theme-" + theme)
+                await self.bot.get_channel(SUBMIT_CHANNEL_ID).edit(name="Theme-" + theme)
                 #await ctx.channel.edit(name="Theme-" + theme)
                 await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name = "you make " + theme))
             else:
@@ -74,10 +86,13 @@ class Admin(Cog):
 
     @command(name="givexp")
     async def givexp(self, ctx, userID, XPamount):
-        print(userID, XPamount)
+        await self.bot.get_channel(LOG_CHANNEL_ID).send(f"Added {str(XPamount)} XP to {self.bot.get_user(int(userID)).display_name}")
         if ctx.author.guild_permissions.administrator:
-            db.execute("UPDATE users SET renderXP = renderXP + ? WHERE userID = ?", XPamount, userID)
-            await ctx.channel.send("Added some XP")
+            if db.field("SELECT userID FROM users WHERE userID = ?", userID) != None:
+                db.execute("UPDATE users SET renderXP = renderXP + ? WHERE userID = ?", XPamount, userID)
+                await ctx.send(f"Added {str(XPamount)} XP to {self.bot.get_user(int(userID)).display_name}")
+            else:
+                await ctx.send("User not in database.")
 
 
     #puts the old data into the new database, all paths are hardcoded
@@ -139,8 +154,14 @@ class Admin(Cog):
 
     @command(name="makelb")
     async def show_leaderboard(self, ctx):
-        await self.bot.clear_leaderboard()
-        await self.bot.make_leaderboard()
+        if ctx.author.guild_permissions.administrator:
+            await self.bot.clear_leaderboard()
+            await self.bot.make_leaderboard()
+
+    @command(name="dodaily")
+    async def run_daily_challenge(self, ctx):
+        if ctx.author.guild_permissions.administrator:
+            await self.bot.daily_challenge()
 
 
 def setup(bot):

@@ -86,8 +86,8 @@ class Bot(BotBase):
     async def get_daily_theme(self):
         return db.field("SELECT themeName FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
 
-    async def move_to_voting(self, msgID, userID):
-        channel = self.get_channel(SUBMIT_CHANNEL_ID)
+    async def move_to_voting(self, channelID, msgID, userID):
+        channel = self.get_channel(channelID)
         msg = await channel.fetch_message(msgID)
         #just double checking if the embed is still there
         if msg.attachments:
@@ -120,6 +120,7 @@ class Bot(BotBase):
 
 
     async def daily_challenge(self):
+        await self.get_channel(LOG_CHANNEL_ID).send("Running daily challenge function")
         challengeID, previousChallengeID = db.record("SELECT currentChallengeID, previousChallengeID FROM currentChallenge WHERE challengeTypeID = 0")
         #count votes
         scores = db.records("SELECT userID, msgID, challengeID, SUM(vote) FROM submission NATURAL JOIN votes WHERE challengeID = ? GROUP BY msgID", previousChallengeID)
@@ -147,7 +148,7 @@ class Bot(BotBase):
             await self.get_channel(VOTING_CHANNEL_ID).send(embed=preSubEmbed)
             subs = db.records("SELECT userID, msgID FROM submission WHERE challengeID = ?", challengeID)
             for userID, msgID in subs:
-                votingMsgID = await self.move_to_voting(msgID, userID)
+                votingMsgID = await self.move_to_voting(SUBMIT_CHANNEL_ID, msgID, userID)
                 db.execute("UPDATE submission SET votingMsgID = ? WHERE msgID = ?", votingMsgID, msgID)
         else:
             await self.get_channel(VOTING_CHANNEL_ID).send("Looks like there are no submissions for the theme " + themeName)
@@ -164,6 +165,9 @@ class Bot(BotBase):
         await self.change_presence(activity=Activity(type=ActivityType.watching, name = "you make " + newDailyTheme))
         #apparently it can get stuck on renaming the channel (hopefully not a problem when doing once a day)...
         await self.get_channel(SUBMIT_CHANNEL_ID).edit(name="Theme-" + newDailyTheme)
+
+    async def weekly_challenge(self):
+        await self.get_channel(LOG_CHANNEL_ID).send("Reminder to implement weekly challenges")
 
     async def on_disconnect(self):
         print("Bot disconnected")
@@ -193,6 +197,7 @@ class Bot(BotBase):
         if not self.ready:
             self.guild = self.get_guild(GUILD_ID)
             self.scheduler.add_job(self.daily_challenge, CronTrigger(hour=6, minute=0))
+            self.scheduler.add_job(self.weekly_challenge, CronTrigger(day_of_week=5, hour=7, minute=0))
             self.scheduler.start()
             lastTheme = db.field("SELECT themeName FROM challenge WHERE challengeID = (SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0)")
             await self.change_presence(activity=Activity(type=ActivityType.watching, name = "you make " + lastTheme))
@@ -211,11 +216,9 @@ class Bot(BotBase):
     async def on_message(self, message):
         if not message.author.bot:
             await self.process_commands(message)
-        
-        if message.content.startswith("$dodaily"):
-            await self.daily_challenge()
 
     async def make_leaderboard(self):
+        await self.get_channel(LOG_CHANNEL_ID).send("Making leaderboard.")
         scores = db.records("SELECT userID, renderXP FROM users WHERE renderXP > 0 ORDER BY renderXP DESC LIMIT 100")
         for score in scores:
             user = self.get_user(score[0])
