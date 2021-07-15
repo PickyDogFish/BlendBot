@@ -149,8 +149,13 @@ class Admin(Cog):
     @command(name="showapproved")
     async def show_rejected(self, ctx):
         if ctx.author.guild_permissions.administrator:
-            listOfRejected = db.column("SELECT themeName FROM themes WHERE themeStatus = 1 LIMIT 100")
-            await ctx.send(listOfRejected)
+            listOfApproved= db.column("SELECT themeName FROM themes WHERE themeStatus = 1 LIMIT 100")
+            await ctx.send(listOfApproved)
+
+    @command(name="showthemes")
+    async def show_themes(self,ctx):
+        if ctx.author.guild_permissions.administrator:
+            await ctx.send(db.records("SELECT themeName FROM themes ORDER BY lastUsed LIMIT 50"))
 
     @command(name="makelb")
     async def show_leaderboard(self, ctx):
