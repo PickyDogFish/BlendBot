@@ -15,7 +15,7 @@ from ..db import db
 
 from PIL import Image, ImageDraw, ImageFont
 
-testing = True
+testing = False
 
 PREFIX = "$"
 OWNER_IDS = [176764856513462272, 261049658569129984]
