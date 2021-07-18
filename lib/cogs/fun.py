@@ -1,4 +1,4 @@
-from lib.bot import LOG_CHANNEL_ID, SUBMIT_CHANNEL_ID
+from lib.bot import LOG_CHANNEL_ID, SUBMIT_CHANNEL_ID, GUILD_ID
 from discord.ext.commands import Cog
 from discord.ext.commands import command
 from discord import Embed
@@ -123,17 +123,24 @@ class Fun(Cog):
     @command(name="level")
     async def make_level_image(self, ctx, username=None):
         user = None
+
         if username:
-            print(username + " -> " + username[3:-1])
-            user = self.bot.get_user(int(username[3:-1]))
-            if not user:
-                await self.bot.get_channel(LOG_CHANNEL_ID).send(f"ERROR: could not retrieve user: {username} -> {username[3:-1]}")
-                await ctx.send("Could not retrieve the user.")
-            if user.bot:
-                await ctx.send("This user is a bot.")
-                return
+            try:
+                int(username[3:-1])
+                print(username + " -> " + username[3:-1])
+                user = self.bot.get_user(int(username[3:-1]))
+            except:
+                user = self.bot.get_guild(GUILD_ID).get_member_named(username)
         else:
             user = ctx.author
+
+        if not user:
+            await self.bot.get_channel(LOG_CHANNEL_ID).send(f"ERROR: could not retrieve user: {username} -> {username[3:-1]}")
+            await ctx.send("Could not retrieve the user.")
+            return
+        if user.bot:
+            await ctx.send("This user is a bot.")
+            return
 
         renderXP = db.field("SELECT renderXP FROM users WHERE userID = ?", user.id)
         (renderLvl, renderLeftoverXP, renderStep) = await self.calculate_render_level(renderXP)
