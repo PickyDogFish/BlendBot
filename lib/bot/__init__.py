@@ -34,6 +34,7 @@ WELCOME_CHANNEL_ID = 831849610426580992
 BOT_TESTING_CHANNEL_ID = 833376293969723452
 TODO_CHANNEL_ID = 832203986575818802
 LOG_CHANNEL_ID = 864912275864158218
+BOT_SPAM_CHANNEL_ID = 831471855910780988
 
 if testing:
     GENERAL_CHANNEL_ID = 835427910201507860
@@ -43,6 +44,7 @@ if testing:
     GUILD_ID = 835427909724143617
     LOG_CHANNEL_ID = 864911454628741160
     BOT_TESTING_CHANNEL_ID = 865206590336532510
+    BOT_SPAM_CHANNEL_ID = BOT_TESTING_CHANNEL_ID
 
 
 #testing server ids
@@ -127,14 +129,33 @@ class Bot(BotBase):
         scores = db.records("SELECT userID, msgID, challengeID, SUM(vote) FROM submission NATURAL JOIN votes WHERE challengeID = ? GROUP BY msgID", previousChallengeID)
         isSubmission = False
         voteCountText = ""
+
+        #saving ranks pre-vote count
+        previousRanks = []
+        for submission in scores:
+            renderXP = db.field("SELECT renderXP FROM users WHERE userID = ?", submission[0]) 
+            previousRanks.append(db.field("SELECT COUNT(userID) FROM users WHERE renderXP >= ?", renderXP))
+
         for submission in scores:
             isSubmission = True
             voteCountText += self.get_user(submission[0]).display_name + " collected " + str(submission[3]) + " points\n"
-            if db.field("SELECT renderXP FROM users WHERE userID = ?", submission[0]) == 0:
+            #assigns the Daily Wizard role if renderXP was 0
+            renderXP = db.field("SELECT renderXP FROM users WHERE userID = ?", submission[0]) 
+            if renderXP == 0:
                 role = get(self.guild.roles, name="Daily Wizard")
                 await self.get_guild(GUILD_ID).get_member(submission[0]).add_roles(role)
             db.execute("UPDATE users SET renderXP = renderXP + ? WHERE userID = ?", submission[3], submission[0])
         
+        #checking if users moved up in rank, send rank up messages
+        tempIndex = 0
+        for submission in scores:
+            newRank = db.field("SELECT COUNT(userID) FROM users WHERE renderXP >= ?", renderXP + submission[3])
+            print(previousRanks[tempIndex], newRank)
+            if previousRanks[tempIndex] > newRank:
+                await self.get_channel(BOT_SPAM_CHANNEL_ID).send(self.get_user(submission[0]).mention + f" moved up from {previousRanks[tempIndex]}. place to {newRank}. place!")
+            tempIndex += 1
+
+        #if there were any submissions, send the vote counts, remake leaderboard
         if isSubmission:
             countTheme, startDate = db.record("SELECT themeName, startDate FROM challenge WHERE challengeID = ?", previousChallengeID)
             voteCountEmbed = Embed(title="Vote counts for " + countTheme + ", which started on " + datetime.fromisoformat(startDate).date().isoformat() + ":", description=voteCountText)
@@ -164,8 +185,11 @@ class Bot(BotBase):
         embeded = Embed(colour = 16754726, title="The new theme for the daily challenge is: ", description="**"+newDailyTheme.upper()+ "**")
         await self.get_channel(SUBMIT_CHANNEL_ID).send(embed=embeded)
         await self.change_presence(activity=Activity(type=ActivityType.watching, name = "you make " + newDailyTheme))
+        print(newDailyTheme)
         #apparently it can get stuck on renaming the channel (hopefully not a problem when doing once a day)...
+        print(newDailyTheme)
         await self.get_channel(SUBMIT_CHANNEL_ID).edit(name="Theme-" + newDailyTheme)
+        print(newDailyTheme)
 
     async def weekly_challenge(self):
         await self.get_channel(LOG_CHANNEL_ID).send("Reminder to implement weekly challenges")
