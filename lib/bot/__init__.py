@@ -15,7 +15,7 @@ from ..db import db
 
 from PIL import Image, ImageDraw, ImageFont
 
-testing = False
+testing = True
 
 PREFIX = "$"
 OWNER_IDS = [176764856513462272, 261049658569129984]
@@ -41,7 +41,8 @@ if testing:
     VOTING_CHANNEL_ID = 835429490464129054
     LB_CHANNEL_ID = 857997935244869652
     GUILD_ID = 835427909724143617
-    LOG_CHANNEL_ID = 864911454628741160 
+    LOG_CHANNEL_ID = 864911454628741160
+    BOT_TESTING_CHANNEL_ID = 865206590336532510
 
 
 #testing server ids
@@ -168,6 +169,11 @@ class Bot(BotBase):
 
     async def weekly_challenge(self):
         await self.get_channel(LOG_CHANNEL_ID).send("Reminder to implement weekly challenges")
+
+    async def custom_challenge(self, name, link, numOfDays):
+        customChallengeEmbed = Embed(title="Custom challenge: " + name)
+        customChallengeEmbed.set_image(url=link)
+        await self.get_channel(BOT_TESTING_CHANNEL_ID).send(embed=customChallengeEmbed)
 
     async def on_disconnect(self):
         print("Bot disconnected")

@@ -168,6 +168,11 @@ class Admin(Cog):
         if ctx.author.guild_permissions.administrator:
             await self.bot.daily_challenge()
 
+    @command(name="docustom")
+    async def run_custom_challenge(self,ctx, name, link, numOfDays):
+        if ctx.author.guild_permissions.administrator:
+            await self.bot.custom_challenge(name, link, numOfDays)
+
 
 def setup(bot):
     bot.add_cog(Admin(bot))

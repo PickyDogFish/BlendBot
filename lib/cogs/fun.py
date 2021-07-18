@@ -1,4 +1,4 @@
-from lib.bot import SUBMIT_CHANNEL_ID
+from lib.bot import LOG_CHANNEL_ID, SUBMIT_CHANNEL_ID
 from discord.ext.commands import Cog
 from discord.ext.commands import command
 from discord import Embed
@@ -124,7 +124,11 @@ class Fun(Cog):
     async def make_level_image(self, ctx, username=None):
         user = None
         if username:
+            print(username + " -> " + username[3:-1])
             user = self.bot.get_user(int(username[3:-1]))
+            if not user:
+                await self.bot.get_channel(LOG_CHANNEL_ID).send(f"ERROR: could not retrieve user: {username} -> {username[3:-1]}")
+                await ctx.send("Could not retrieve the user.")
             if user.bot:
                 await ctx.send("This user is a bot.")
                 return
