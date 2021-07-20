@@ -2,7 +2,8 @@ CREATE TABLE IF NOT EXISTS users (
     userID integer PRIMARY KEY NOT NULL,
     msgXP integer DEFAULT 0,
     renderXP integer DEFAULT 0,
-    XPLock text DEFAULT CURRENT_TIMESTAMP
+    XPLock text DEFAULT CURRENT_TIMESTAMP,
+    isInServer boolean DEFAULT 1
 );
 
 CREATE TABLE IF NOT EXISTS submission (

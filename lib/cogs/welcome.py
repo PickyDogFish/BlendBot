@@ -1,7 +1,7 @@
 from discord.ext.commands import Cog
 from discord.ext.commands import command
 from ..db import db
-from lib.bot import WELCOME_CHANNEL_ID
+from lib.bot import LOG_CHANNEL_ID, WELCOME_CHANNEL_ID
 
 class Welcome(Cog):
     def __init__(self, bot):
@@ -13,12 +13,16 @@ class Welcome(Cog):
 
     @Cog.listener()
     async def on_member_join(self, member):
+        if db.record("SELECT * FROM users WHERE userID = ?", member.id) != None:
+            db.execute("UPDATE users SET isInServer = 1 WHERE userID = ?", member.id)
+            await self.bot.get_channel(LOG_CHANNEL_ID).send(member.name + "just rejoined the server.")
+
         db.execute("INSERT OR IGNORE INTO users (UserID) VALUES (?)", member.id)
         await self.bot.get_channel(WELCOME_CHANNEL_ID).send(f"Welcome to **{member.guild.name}** {member.mention}!")
 
     async def on_member_remove(self, member):
         #await self.bot.get_channel(855802065737351178).send(f"Sad to see you go {member.mention}!")
-        pass
+        db.execute("UPDATE users SET isInServer = 0 WHERE userID = ?", member.id)
 
     
 

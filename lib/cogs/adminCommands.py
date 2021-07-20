@@ -7,7 +7,7 @@ from discord.ext.commands.core import cooldown
 from ..db import db
 from datetime import date, datetime, timedelta
 import json
-from lib.bot import LOG_CHANNEL_ID, SUBMIT_CHANNEL_ID
+from lib.bot import LOG_CHANNEL_ID, OWNER_IDS, SUBMIT_CHANNEL_ID
 
 class Admin(Cog):
     def __init__(self, bot):
@@ -172,6 +172,13 @@ class Admin(Cog):
     async def run_custom_challenge(self,ctx, name, link, numOfDays):
         if ctx.author.guild_permissions.administrator:
             await self.bot.custom_challenge(name, link, numOfDays)
+
+
+    @command(name="customSQL")
+    async def run_custom_SQL(self, ctx, *, command):
+        if ctx.author.id in OWNER_IDS:
+            await self.bot.get_channel(LOG_CHANNEL_ID).send(ctx.author.name + " just ran custom SQL: " + command)
+            db.execute(command)
 
 
 def setup(bot):
