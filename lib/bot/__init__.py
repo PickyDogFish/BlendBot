@@ -149,7 +149,8 @@ class Bot(BotBase):
         #checking if users moved up in rank, send rank up messages
         tempIndex = 0
         for submission in scores:
-            newRank = db.field("SELECT COUNT(userID) FROM users WHERE renderXP >= ?", renderXP + submission[3])
+            renderXP = db.field("SELECT renderXP FROM users WHERE userID = ?", submission[0])
+            newRank = db.field("SELECT COUNT(userID) FROM users WHERE renderXP >= ?", renderXP)
             print(previousRanks[tempIndex], newRank)
             if previousRanks[tempIndex] > newRank:
                 await self.get_channel(BOT_SPAM_CHANNEL_ID).send(self.get_user(submission[0]).mention + f" moved up from {previousRanks[tempIndex]}. place to {newRank}. place!")
