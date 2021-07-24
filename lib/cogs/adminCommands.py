@@ -168,10 +168,18 @@ class Admin(Cog):
         if ctx.author.guild_permissions.administrator:
             await self.bot.daily_challenge()
 
-    @command(name="docustom")
-    async def run_custom_challenge(self,ctx, name, link, numOfDays):
+    @command(name="setcustom")
+    async def set_custom_challenge(self,ctx, name, link, numOfDays, numOfVotingDays):
         if ctx.author.guild_permissions.administrator:
-            await self.bot.custom_challenge(name, link, numOfDays)
+            db.execute("INSERT INTO challenge (challengeTypeID, themeName, startDate, endDate, votingEndDate, imageLink) VALUES (2, ?, ?, ?, ?, ?)", name, (datetime.utcnow() + timedelta(days=1)).isoformat(timespec='seconds', sep=' '), (datetime.utcnow()+timedelta(days=int(numOfDays)+1)).isoformat(timespec='seconds', sep=' '),(datetime.utcnow() + timedelta(days=int(numOfVotingDays) + int(numOfDays)+1)).isoformat(timespec='seconds', sep=' '), link)
+            newChallengeID = db.field("SELECT challengeID, themeName FROM challenge WHERE challengeTypeID = 2 ORDER BY challengeID DESC")
+            previousChallengeID = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 2")
+            db.execute("UPDATE currentChallenge SET currentChallengeID = ?, previousChallengeID = ? WHERE challengeTypeID = 2", newChallengeID, previousChallengeID)
+
+    @command(name="docustom")
+    async def test_custom_challenge(self, ctx):
+        if ctx.author.guild_permissions.administrator:
+            await self.bot.custom_challenge()
 
 
     @command(name="customSQL")

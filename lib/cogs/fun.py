@@ -1,11 +1,11 @@
-from lib.bot import LOG_CHANNEL_ID, SUBMIT_CHANNEL_ID, GUILD_ID
+from lib.bot import CUSTOM_SUBMIT_ID, LOG_CHANNEL_ID, SUBMIT_CHANNEL_ID, GUILD_ID
 from discord.ext.commands import Cog
 from discord.ext.commands import command
 from discord import Embed
 import discord
 from random import choice
 from ..db import db
-from datetime import datetime
+from datetime import date, datetime
 from math import sqrt
 
 from PIL import Image, ImageDraw, ImageFont
@@ -63,8 +63,9 @@ class Fun(Cog):
 
     @command(name="submit")
     async def submit_daily(self, ctx):
-        if ctx.channel.id != SUBMIT_CHANNEL_ID:
+        if ctx.channel.id != SUBMIT_CHANNEL_ID and ctx.channel.id != CUSTOM_SUBMIT_ID:
             await ctx.send("Cannot submit in this channel.")
+        #for daily challenge submissions
         elif len(ctx.message.attachments) > 0 and ctx.channel.id == SUBMIT_CHANNEL_ID:
             chalID = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0")
             if (db.field("SELECT msgID FROM submission WHERE challengeID = ? AND userID = ?", chalID, ctx.author.id) == None):
@@ -72,6 +73,17 @@ class Fun(Cog):
             else:
                 db.execute("UPDATE submission SET msgID = ? WHERE challengeID = ? AND userID = ?", ctx.message.id, chalID, ctx.author.id)
             await ctx.message.add_reaction("✅")
+        #for custom challenge submissions
+        elif len(ctx.message.attachments) > 0 and ctx.channel.id == CUSTOM_SUBMIT_ID:
+            challengeID = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 2")
+            if db.field("SELECT endDate FROM challenge WHERE challengeID = ?", challengeID) < datetime.utcnow().isoformat(timespec='seconds', sep=' '):
+                await ctx.send("No custom challenges currently active.")
+            else:
+                if (db.field("SELECT msgID FROM submission WHERE challengeID = ? AND userID = ?", challengeID, ctx.author.id) == None):
+                    db.execute("INSERT INTO submission (userID, msgID, challengeID) VALUES (?, ?, ?)", ctx.author.id, ctx.message.id, challengeID)
+                else:
+                    db.execute("UPDATE submission SET msgID = ? WHERE challengeID = ? AND userID = ?", ctx.message.id, challengeID, ctx.author.id)
+                await ctx.message.add_reaction("✅")
 
     @command(name="daily")
     async def show_daily(self, ctx):

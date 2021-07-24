@@ -63,4 +63,6 @@ INSERT OR IGNORE INTO challenge (challengeID, themeName, startDate, endDate) VAL
 
 INSERT OR IGNORE INTO currentChallenge (currentChallengeID, previousChallengeID, challengeTypeID) VALUES (0,0,0);
 
+INSERT OR IGNORE INTO currentChallenge (currentChallengeID, previousChallengeID, challengeTypeID) VALUES (0, 0, 2)
+
 
