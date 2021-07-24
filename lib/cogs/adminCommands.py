@@ -175,6 +175,7 @@ class Admin(Cog):
             newChallengeID = db.field("SELECT challengeID, themeName FROM challenge WHERE challengeTypeID = 2 ORDER BY challengeID DESC")
             previousChallengeID = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 2")
             db.execute("UPDATE currentChallenge SET currentChallengeID = ?, previousChallengeID = ? WHERE challengeTypeID = 2", newChallengeID, previousChallengeID)
+            await ctx.send("Set the next custom challenge.")
 
     @command(name="docustom")
     async def test_custom_challenge(self, ctx):

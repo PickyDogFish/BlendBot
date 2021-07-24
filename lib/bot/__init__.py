@@ -198,6 +198,7 @@ class Bot(BotBase):
         await self.get_channel(LOG_CHANNEL_ID).send("Reminder to implement weekly challenges")
 
     async def custom_challenge(self):
+        await self.get_channel(LOG_CHANNEL_ID).send("Running custom challenge function.")
         challengeID = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 2")
         themeName, startDate, endDate, votingEndDate, imageLink = db.record("SELECT themeName, startDate, endDate, votingEndDate, imageLink FROM challenge WHERE challengeID = ?", challengeID)
         previousChallengeID = db.field("SELECT previousChallengeID FROM currentChallenge WHERE challengeTypeID = 2")
