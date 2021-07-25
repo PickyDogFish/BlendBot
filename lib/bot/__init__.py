@@ -215,7 +215,7 @@ class Bot(BotBase):
             await self.get_channel(CUSTOM_SUBMIT_ID).send(embed=customChallengeEmbed)
 
         #if prevVotingEndDate is today, count the votes for it
-        if datetime.fromisoformat(prevVotingEndDate).date() == datetime.utcnow().date():
+        if prevVotingEndDate != None and datetime.fromisoformat(prevVotingEndDate).date() == datetime.utcnow().date():
             await self.get_channel(LOG_CHANNEL_ID).send("Counting votes of previous custom challenge")
             #count votes
             scores = db.records("SELECT userID, msgID, challengeID, SUM(vote) FROM submission NATURAL JOIN votes WHERE challengeID = ? GROUP BY msgID", previousChallengeID)
@@ -255,7 +255,7 @@ class Bot(BotBase):
                 await self.clear_leaderboard()
                 await self.make_leaderboard()
 
-        #if prevVotingEndDate is today, count the votes for it
+        #if votingEndDate is today, count the votes for it
         if datetime.fromisoformat(votingEndDate).date() == datetime.utcnow().date():
             await self.get_channel(LOG_CHANNEL_ID).send("Counting votes of current custom challenge")
             #count votes
