@@ -1,5 +1,5 @@
 from datetime import datetime
-from lib.bot import VOTING_CHANNEL_ID
+from lib.bot import GUILD_ID, VOTING_CHANNEL_ID
 from discord.ext.commands import Cog
 from ..db import db
 from discord import Embed
@@ -56,7 +56,9 @@ class Reactions(Cog):
 
         if payload.message_id == 868898232699338773:
             if payload.emoji.name == "blender":
-                await self.bot.add_roles(self.bot.get_user(payload.member.id), 868864580007374898)
+                #role = get(self.guild.roles, name="blender")
+                await self.get_guild(GUILD_ID).get_member(payload.member.id).add_roles(868864580007374898)
+                #await self.bot.add_roles(self.bot.get_user(payload.member.id), 868864580007374898)
 
             elif payload.emoji.name == "maya":
                 await self.bot.add_roles(self.bot.get_user(payload.member.id), 868864631156928593)

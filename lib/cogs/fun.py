@@ -190,7 +190,7 @@ class Fun(Cog):
             await ctx.send(file=pic)
 
     @command(name="giverole")
-    async def giverole(self, ctx, roleName):
+    async def give_role(self, ctx, roleName):
         if roleName.lower() == "blender":
             await self.bot.add_roles(ctx.message.author, 868864580007374898)
             await ctx.send("Assigned role Blender")
@@ -204,9 +204,10 @@ class Fun(Cog):
             await ctx.send("Cant find role named \"" + roleName + "\"")
 
     @command(name="removerole")
-    async def giverole(self, ctx, roleName):
+    async def remove_role(self, ctx, roleName):
         if roleName.lower() == "blender":
-            await self.bot.remove_roles(ctx.message.author, 868864580007374898)
+            await self.get_guild(GUILD_ID).get_member(ctx.author.id).add_roles(868864580007374898)
+            #await self.bot.remove_roles(ctx.message.author, 868864580007374898)
             await ctx.send("Removed role Blender")
         elif roleName.lower() == "maya":
             await self.bot.remove_roles(ctx.message.author, 868864631156928593)
