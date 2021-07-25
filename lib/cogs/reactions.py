@@ -3,6 +3,7 @@ from lib.bot import GUILD_ID, VOTING_CHANNEL_ID
 from discord.ext.commands import Cog
 from ..db import db
 from discord import Embed
+from discord.utils import get
 
 switcher = {"1️⃣": 1, "2️⃣": 2, "3️⃣": 3, "4️⃣": 4, "5️⃣": 5}
 
@@ -56,15 +57,16 @@ class Reactions(Cog):
 
         if payload.message_id == 868898232699338773:
             if payload.emoji.name == "blender":
-                #role = get(self.guild.roles, name="blender")
-                await self.bot.get_guild(GUILD_ID).get_member(payload.user_id).add_roles(868864580007374898)
-                #await self.bot.add_roles(self.bot.get_user(payload.member.id), 868864580007374898)
+                role = get(self.guild.roles, name="Blender")
+                await self.bot.get_guild(GUILD_ID).get_member(payload.user_id).add_roles(role)
 
             elif payload.emoji.name == "maya":
-                await self.bot.add_roles(self.bot.get_user(payload.user_id), 868864631156928593)
+                role = get(self.guild.roles, name="Maya")
+                await self.bot.get_guild(GUILD_ID).get_member(payload.user_id).add_roles(role)
 
             elif payload.emoji.name == "C4D":
-                await self.bot.add_roles(self.bot.get_user(payload.user_id), 868864693069025291)
+                role = get(self.guild.roles, name="C4D")
+                await self.bot.get_guild(GUILD_ID).get_member(payload.user_id).add_roles(role)
             
 
 
