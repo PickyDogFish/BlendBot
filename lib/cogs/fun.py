@@ -189,7 +189,35 @@ class Fun(Cog):
             pic = discord.File(f)
             await ctx.send(file=pic)
 
+    @command(name="giverole")
+    async def giverole(self, ctx, roleName):
+        if roleName.lower() == "blender":
+            await self.bot.add_roles(ctx.message.author, 868864580007374898)
+            await ctx.send("Assigned role Blender")
+        elif roleName.lower() == "maya":
+            await self.bot.add_roles(ctx.message.author, 868864631156928593)
+            await ctx.send("Assigned role Maya")
+        elif roleName.lower() == "c4d":
+            await self.bot.add_roles(ctx.message.author, 868864693069025291)
+            await ctx.send("Assigned role C4D")
+        else:
+            await ctx.send("Cant find role named \"" + roleName + "\"")
 
+    @command(name="removerole")
+    async def giverole(self, ctx, roleName):
+        if roleName.lower() == "blender":
+            await self.bot.remove_roles(ctx.message.author, 868864580007374898)
+            await ctx.send("Removed role Blender")
+        elif roleName.lower() == "maya":
+            await self.bot.remove_roles(ctx.message.author, 868864631156928593)
+            await ctx.send("Removed role Maya")
+        elif roleName.lower() == "c4d":
+            await self.bot.remove_roles(ctx.message.author, 868864693069025291)
+            await ctx.send("Removed role C4D")
+        else:
+            await ctx.send("Cant find role named \"" + roleName + "\"")
+
+            
     @Cog.listener()
     async def on_ready(self):
         print("fun cog ready")
