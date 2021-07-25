@@ -206,7 +206,7 @@ class Fun(Cog):
     @command(name="removerole")
     async def remove_role(self, ctx, roleName):
         if roleName.lower() == "blender":
-            await self.get_guild(GUILD_ID).get_member(ctx.author.id).add_roles(868864580007374898)
+            await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).add_roles(868864580007374898)
             #await self.bot.remove_roles(ctx.message.author, 868864580007374898)
             await ctx.send("Removed role Blender")
         elif roleName.lower() == "maya":
