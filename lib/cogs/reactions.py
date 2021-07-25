@@ -65,7 +65,7 @@ class Reactions(Cog):
                 await self.bot.get_guild(GUILD_ID).get_member(payload.user_id).add_roles(role)
 
             elif payload.emoji.name == "C4D":
-                role = get(self.guild.roles, name="C4D")
+                role = get(self.bot.guild.roles, name="C4D")
                 await self.bot.get_guild(GUILD_ID).get_member(payload.user_id).add_roles(role)
             
 

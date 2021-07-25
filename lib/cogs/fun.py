@@ -10,6 +10,8 @@ from math import sqrt
 
 from PIL import Image, ImageDraw, ImageFont
 
+from discord.utils import get
+
 class Fun(Cog):
     def __init__(self, bot):
         self.bot=bot
@@ -192,13 +194,16 @@ class Fun(Cog):
     @command(name="giverole")
     async def give_role(self, ctx, roleName):
         if roleName.lower() == "blender":
-            await self.bot.add_roles(ctx.message.author, 868864580007374898)
+            role = get(self.bot.guild.roles, name="Blender")
+            await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).add_roles(role)
             await ctx.send("Assigned role Blender")
         elif roleName.lower() == "maya":
-            await self.bot.add_roles(ctx.message.author, 868864631156928593)
+            role = get(self.bot.guild.roles, name="Maya")
+            await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).add_roles(role)
             await ctx.send("Assigned role Maya")
         elif roleName.lower() == "c4d":
-            await self.bot.add_roles(ctx.message.author, 868864693069025291)
+            role = get(self.bot.guild.roles, name="C4D")
+            await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).add_roles(role)
             await ctx.send("Assigned role C4D")
         else:
             await ctx.send("Cant find role named \"" + roleName + "\"")
@@ -206,14 +211,16 @@ class Fun(Cog):
     @command(name="removerole")
     async def remove_role(self, ctx, roleName):
         if roleName.lower() == "blender":
-            await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).add_roles(868864580007374898)
-            #await self.bot.remove_roles(ctx.message.author, 868864580007374898)
+            role = get(self.bot.guild.roles, name="Blender")
+            await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).remove_roles(role)
             await ctx.send("Removed role Blender")
         elif roleName.lower() == "maya":
-            await self.bot.remove_roles(ctx.message.author, 868864631156928593)
+            role = get(self.bot.guild.roles, name="Maya")
+            await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).remove_roles(role)
             await ctx.send("Removed role Maya")
         elif roleName.lower() == "c4d":
-            await self.bot.remove_roles(ctx.message.author, 868864693069025291)
+            role = get(self.bot.guild.roles, name="C4D")
+            await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).remove_roles(role)
             await ctx.send("Removed role C4D")
         else:
             await ctx.send("Cant find role named \"" + roleName + "\"")
