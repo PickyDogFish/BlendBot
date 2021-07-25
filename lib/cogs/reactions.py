@@ -57,14 +57,14 @@ class Reactions(Cog):
         if payload.message_id == 868898232699338773:
             if payload.emoji.name == "blender":
                 #role = get(self.guild.roles, name="blender")
-                await self.bot.get_guild(GUILD_ID).get_member(payload.member).add_roles(868864580007374898)
+                await self.bot.get_guild(GUILD_ID).get_member(payload.user_id).add_roles(868864580007374898)
                 #await self.bot.add_roles(self.bot.get_user(payload.member.id), 868864580007374898)
 
             elif payload.emoji.name == "maya":
-                await self.bot.add_roles(self.bot.get_user(payload.member), 868864631156928593)
+                await self.bot.add_roles(self.bot.get_user(payload.user_id), 868864631156928593)
 
             elif payload.emoji.name == "C4D":
-                await self.bot.add_roles(self.bot.get_user(payload.member), 868864693069025291)
+                await self.bot.add_roles(self.bot.get_user(payload.user_id), 868864693069025291)
             
 
 
