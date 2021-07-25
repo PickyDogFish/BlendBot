@@ -54,6 +54,18 @@ class Reactions(Cog):
             msg = await channel.fetch_message(payload.message_id)
             await msg.remove_reaction(payload.emoji, user)
 
+        if payload.message_id == 868898232699338773:
+            if payload.emoji.name == "blender":
+                await self.bot.add_roles(self.bot.get_user(payload.member.id), 868864580007374898)
+
+            elif payload.emoji.name == "maya":
+                await self.bot.add_roles(self.bot.get_user(payload.member.id), 868864631156928593)
+
+            elif payload.emoji.name == "C4D":
+                await self.bot.add_roles(self.bot.get_user(payload.member.id), 868864693069025291)
+            
+
+
 
     @Cog.listener()
     async def on_raw_reaction_remove(self, payload):
