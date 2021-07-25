@@ -1,3 +1,4 @@
+from datetime import datetime
 from lib.bot import VOTING_CHANNEL_ID
 from discord.ext.commands import Cog
 from ..db import db
@@ -28,7 +29,9 @@ class Reactions(Cog):
             print(f"{payload.member.display_name} reacted with {payload.emoji.name}")
             emoji = switcher.get(payload.emoji.name)
             #check if emoji was from 1 to 5 and if voting is still active for this submission
-            if emoji != None and db.field("SELECT previousChallengeID FROM currentChallenge WHERE challengeTypeID = 0") == db.field("SELECT challengeID FROM submission WHERE votingMsgID = ?", payload.message_id):
+            challengeID = db.field("SELECT challengeID FROM submission WHERE votingMsgID = ?", payload.message_id)
+            votingEndDate = db.field("SELECT votingEndDate FROM challenge WHERE challengeID = ?", challengeID)
+            if emoji != None and votingEndDate > datetime.utcnow().isoformat(timespec='seconds', sep=' '):
                 print("vote added to DB")
                 #check if new vote or a change of vote
                 newVote = True
