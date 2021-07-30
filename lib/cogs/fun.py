@@ -93,10 +93,22 @@ class Fun(Cog):
 
     @command(name="time")
     async def show_time_left(self, ctx):
-        now = datetime.now()
-        nekiure = (5 - now.hour) % 24
-        nekimin = 60 - now.minute
-        await ctx.send("You have " + str(nekiure) + " hours and " + str(nekimin) + " minutes left!")
+        #time for custom challenges
+        if ctx.channel.id == CUSTOM_SUBMIT_ID:
+            now = datetime.utcnow()
+            challengeID = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 2")
+            untill = db.field("SELECT endDate FROM challenge WHERE challengeID = ?", challengeID)
+            if untill < now.isoformat(timespec='seconds', sep=' '):
+                await ctx.send("No special challenge currently active.")
+            else:
+                difference = datetime.fromisoformat(untill)-now
+                await ctx.send(f"You have {difference.days} days, {difference.seconds // 3600} hours and {difference.seconds % 3600 // 60} minutes left.")
+        #time for daily challenges
+        else:
+            now = datetime.now()
+            nekiure = (5 - now.hour) % 24
+            nekimin = 60 - now.minute
+            await ctx.send("You have " + str(nekiure) + " hours and " + str(nekimin) + " minutes left!")
 
     @command(name="oldlevel")
     async def show_level(self,ctx):
