@@ -198,7 +198,7 @@ class Admin(Cog):
             voters = db.records("SELECT voterID, count(votingMsgID) as numOfVotes FROM votes GROUP BY voterID ORDER BY numOfVotes DESC")
             names = ""
             for id, count in voters:
-                names += self.bot.get_user(id).display_name
+                names += self.bot.get_user(id).display_name +": " + str(count) + ", "
             await ctx.send(names)
 
 def setup(bot):
