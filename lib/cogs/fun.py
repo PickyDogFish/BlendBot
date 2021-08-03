@@ -1,4 +1,4 @@
-from lib.bot import CUSTOM_SUBMIT_ID, LOG_CHANNEL_ID, SUBMIT_CHANNEL_ID, GUILD_ID
+from lib.bot import CUSTOM_SUBMIT_ID, LOG_CHANNEL_ID, SUBMIT_CHANNEL_ID, GUILD_ID, VOTING_CHANNEL_ID
 from discord.ext.commands import Cog
 from discord.ext.commands import command
 from discord import Embed
@@ -236,6 +236,35 @@ class Fun(Cog):
             await ctx.send("Removed role C4D")
         else:
             await ctx.send("Cant find role named \"" + roleName + "\"")
+
+    #@command(name="portfolio")
+    async def show_portfolio(self, ctx):
+        image_types = ["png", "jpeg", "gif", "jpg"]
+        submissions = db.column("SELECT votingMsgID FROM submission WHERE userID = ? AND votingMsgID IS NOT NULL", ctx.author.id)
+        votingChannel = self.bot.get_channel(VOTING_CHANNEL_ID)
+
+        imgHeight = 0
+        msg = votingChannel.fetch_message(submissions[0])
+        link = None
+        index = 0
+        while not msg.embeds[index].image.url:
+            if msg.embeds[index+1].image.url:
+                link = msg.embeds[index+1].image.url
+        prevImgs = Image.open(link)
+        for i in range(1, len(submissions)-1):
+            pass
+        img = Image.new('RGB', (1080, 1080), color = (30, 30, 30))
+
+    @command(name="stats")
+    async def show_stats(self,ctx):
+        stats = "All-time points: " + str(db.field("SELECT renderXP FROM users WHERE userID = ?", ctx.author.id)) + "\n"
+        stats = stats + "Number of submissions: " + str(db.field("SELECT COUNT(msgID) FROM submission WHERE votingMsgID IS NOT NULL AND userID = ?", ctx.author.id)) + "\n"
+        stats = stats + "Average points per submission: " + "{:.2f}".format(round(db.field("SELECT avg(points) FROM (SELECT SUM(vote) as points FROM submission NATURAL JOIN votes WHERE userID = ? GROUP BY votingMsgID)", ctx.author.id), 2)) + "\n"
+        stats = stats + "Average vote received: " + "{:.2f}".format(round(db.field("SELECT avg(vote) FROM (SELECT avg(vote) as vote FROM submission NATURAL JOIN votes WHERE userID = ? GROUP BY votingMsgID)", ctx.author.id), 2)) + "\n"
+        stats = stats + "Number of votes given: " + str(db.field("SELECT count(votingMsgID) FROM votes WHERE voterID = ? ", ctx.author.id))
+
+        embed = Embed(title="Statistics for " +ctx.author.display_name, description=stats)
+        await ctx.send(embed=embed)
 
             
     @Cog.listener()
