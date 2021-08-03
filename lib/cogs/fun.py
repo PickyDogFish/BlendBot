@@ -60,6 +60,7 @@ class Fun(Cog):
         helpText += "`$random:` Tells a random theme.\n\n"
         helpText += "`$time:` Tells you how much time is left for the current daily challenge.\n\n"
         helpText += "`$level:` Tells you how much time you have spent on this server.\n\n"
+        helpText += "`$stats:` Shows you some of your challenge statistics.\n\n"
         embeded = Embed(title="Daily blend bot help page", colour = 16754726, description = helpText)
         await ctx.send(embed = embeded)
 
@@ -146,7 +147,7 @@ class Fun(Cog):
         return (int(sqrt(xp*10)//10), sqrt(xp*10)%10)
 
 
-    @command(name="level")
+    @command(name="level", aliases=["rank"])
     async def make_level_image(self, ctx, username=None):
         user = None
 
@@ -255,7 +256,7 @@ class Fun(Cog):
             pass
         img = Image.new('RGB', (1080, 1080), color = (30, 30, 30))
 
-    @command(name="stats")
+    @command(name="stats", aliases=["stat", "statistics"])
     async def show_stats(self,ctx):
         stats = "All-time points: " + str(db.field("SELECT renderXP FROM users WHERE userID = ?", ctx.author.id)) + "\n"
         stats = stats + "Number of submissions: " + str(db.field("SELECT COUNT(msgID) FROM submission WHERE votingMsgID IS NOT NULL AND userID = ?", ctx.author.id)) + "\n"
