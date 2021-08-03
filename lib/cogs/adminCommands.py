@@ -192,6 +192,14 @@ class Admin(Cog):
             await self.bot.get_channel(LOG_CHANNEL_ID).send(ctx.author.name + " just ran custom SQL: " + command)
             db.execute(command)
 
+    @command(name="showvoters")
+    async def show_voters(self, ctx):
+        if ctx.author.id in OWNER_IDS:
+            voters = db.records("SELECT voterID, count(votingMsgID) as numOfVotes FROM votes GROUP BY voterID ORDER BY numOfVotes DESC")
+            names = ""
+            for id, count in voters:
+                names += self.bot.get_user(id).display_name
+            await ctx.send(names)
 
 def setup(bot):
     bot.add_cog(Admin(bot))
