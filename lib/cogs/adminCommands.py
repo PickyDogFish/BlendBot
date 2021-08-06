@@ -155,10 +155,10 @@ class Admin(Cog):
                 if i+50 > len(listOfApproved):
                     await ctx.send(listOfApproved[i:])
 
-    @command(name="showthemes")
+    @command(name="showthemes", aliases=["themes"])
     async def show_themes(self,ctx):
         if ctx.author.guild_permissions.administrator:
-            await ctx.send(db.records("SELECT themeName FROM themes ORDER BY lastUsed LIMIT 50"))
+            await ctx.send(db.records("SELECT themeName FROM themes WHERE themeStatus = 1 ORDER BY lastUsed LIMIT 50"))
 
     @command(name="makelb")
     async def show_leaderboard(self, ctx):
