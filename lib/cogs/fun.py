@@ -71,11 +71,15 @@ class Fun(Cog):
         #for daily challenge submissions
         elif len(ctx.message.attachments) > 0 and ctx.channel.id == SUBMIT_CHANNEL_ID:
             chalID = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0")
-            if (db.field("SELECT msgID FROM submission WHERE challengeID = ? AND userID = ?", chalID, ctx.author.id) == None):
-                db.execute("INSERT INTO submission (userID, msgID, challengeID) VALUES (?, ?, ?)", ctx.author.id, ctx.message.id, chalID)
+
+            if ctx.message.attachments.attachments[0].size > 8000:
+                await ctx.send("File too big.")
             else:
-                db.execute("UPDATE submission SET msgID = ? WHERE challengeID = ? AND userID = ?", ctx.message.id, chalID, ctx.author.id)
-            await ctx.message.add_reaction("✅")
+                if (db.field("SELECT msgID FROM submission WHERE challengeID = ? AND userID = ?", chalID, ctx.author.id) == None):
+                    db.execute("INSERT INTO submission (userID, msgID, challengeID) VALUES (?, ?, ?)", ctx.author.id, ctx.message.id, chalID)
+                else:
+                    db.execute("UPDATE submission SET msgID = ? WHERE challengeID = ? AND userID = ?", ctx.message.id, chalID, ctx.author.id)
+                await ctx.message.add_reaction("✅")
         #for custom challenge submissions
         elif len(ctx.message.attachments) > 0 and ctx.channel.id == CUSTOM_SUBMIT_ID:
             challengeID = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 2")
