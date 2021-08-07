@@ -72,7 +72,7 @@ class Fun(Cog):
         elif len(ctx.message.attachments) > 0 and ctx.channel.id == SUBMIT_CHANNEL_ID:
             chalID = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0")
 
-            if ctx.message.attachments[0].size > 8000:
+            if ctx.message.attachments[0].size > 8000000:
                 await ctx.send("Please upload a smaller file (max 8 mb)")
             else:
                 if (db.field("SELECT msgID FROM submission WHERE challengeID = ? AND userID = ?", chalID, ctx.author.id) == None):
