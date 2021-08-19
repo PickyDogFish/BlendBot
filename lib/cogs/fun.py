@@ -262,10 +262,14 @@ class Fun(Cog):
 
     @command(name="stats", aliases=["stat", "statistics"])
     async def show_stats(self,ctx):
+        submissionNum = db.field("SELECT COUNT(msgID) FROM submission WHERE votingMsgID IS NOT NULL AND userID = ?", ctx.author.id)
+
+
         stats = "All-time points: " + str(db.field("SELECT renderXP FROM users WHERE userID = ?", ctx.author.id)) + "\n"
-        stats = stats + "Number of submissions: " + str(db.field("SELECT COUNT(msgID) FROM submission WHERE votingMsgID IS NOT NULL AND userID = ?", ctx.author.id)) + "\n"
-        stats = stats + "Average points per submission: " + "{:.2f}".format(round(db.field("SELECT avg(points) FROM (SELECT SUM(vote) as points FROM submission NATURAL JOIN votes WHERE userID = ? GROUP BY votingMsgID)", ctx.author.id), 2)) + "\n"
-        stats = stats + "Average vote received: " + "{:.2f}".format(round(db.field("SELECT avg(vote) FROM (SELECT avg(vote) as vote FROM submission NATURAL JOIN votes WHERE userID = ? GROUP BY votingMsgID)", ctx.author.id), 2)) + "\n"
+        stats = stats + "Number of submissions: " + str(submissionNum) + "\n"
+        if submissionNum != 0:
+            stats = stats + "Average points per submission: " + "{:.2f}".format(round(db.field("SELECT avg(points) FROM (SELECT SUM(vote) as points FROM submission NATURAL JOIN votes WHERE userID = ? GROUP BY votingMsgID)", ctx.author.id), 2)) + "\n"
+            stats = stats + "Average vote received: " + "{:.2f}".format(round(db.field("SELECT avg(vote) FROM (SELECT avg(vote) as vote FROM submission NATURAL JOIN votes WHERE userID = ? GROUP BY votingMsgID)", ctx.author.id), 2)) + "\n"
         stats = stats + "Average vote given: " + "{:.2f}".format(round(db.field("SELECT avg(vote) FROM votes WHERE voterID = ? ", ctx.author.id), 2))
 
         embed = Embed(title="Statistics for " +ctx.author.display_name, description=stats)
