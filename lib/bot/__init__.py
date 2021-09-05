@@ -180,7 +180,7 @@ class Bot(BotBase):
 
         #createsnew challenge entry in db, make announcement, set bot status
         #TODO make it only select from the pool of not recently used themes
-        newDailyTheme = db.field("SELECT themeName FROM (SELECT * FROM themes ORDER BY lastUsed LIMIT 50) AS notUsed WHERE themeStatus = 1 ORDER BY RANDOM() LIMIT 1")
+        newDailyTheme = db.field("SELECT themeName FROM (SELECT * FROM themes WHERE themeStatus = 1 ORDER BY lastUsed LIMIT 50) AS notUsed WHERE themeStatus = 1 ORDER BY RANDOM() LIMIT 1")
         db.execute("INSERT INTO challenge (themeName, startDate, endDate, votingEndDate) VALUES (?, ?, ?, ?)", newDailyTheme, datetime.utcnow().isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(hours=24)).isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(days=2)).isoformat(timespec='seconds', sep=' '))
         newChallengeID = db.field("SELECT challengeID, themeName FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
         db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '), newDailyTheme)
@@ -402,12 +402,15 @@ class Bot(BotBase):
         else:
             d.text((138,30), curUser.name[0:12] + "...", font=ImageFont.truetype('fonts/arial.ttf', 60), fill=(200, 200, 200))
         d.rectangle((592,0, 720, 128), fill=(200, 200, 0))
-        placeWidth, placeHeight = d.textsize(str(place), font=ImageFont.truetype('fonts/arial.ttf', 128))
+        placeWidth, placeHeight = d.textsize(str(place), font=ImageFont.truetype('fonts/arial.ttf', 120))
+        xpWidth, xpHeight = d.textsize(str(renderXP), font=ImageFont.truetype('fonts/arial.ttf', 32))
         if placeWidth < 90:
-            d.text((656 - placeWidth/2,-10), str(place), font=ImageFont.truetype('fonts/arial.ttf', 128), fill=(0, 0, 0))
+            d.text((656 - placeWidth/2,-18), str(place), font=ImageFont.truetype('fonts/arial.ttf', 120), fill=(0, 0, 0))
+            d.text((656 - xpWidth/2,-18 + placeHeight), str(renderXP), font=ImageFont.truetype('fonts/arial.ttf', 32), fill=(30, 30, 30))
         else:
             placeWidth, placeHeight = d.textsize(str(place), font=ImageFont.truetype('fonts/arial.ttf', 90))
-            d.text((656 - placeWidth/2,9), str(place), font=ImageFont.truetype('fonts/arial.ttf', 90), fill=(0, 0, 0))
+            d.text((656 - placeWidth/2, 0), str(place), font=ImageFont.truetype('fonts/arial.ttf', 90), fill=(0, 0, 0))
+            d.text((656 - xpWidth/2, 0 + placeHeight), str(renderXP), font=ImageFont.truetype('fonts/arial.ttf', 32), fill=(30, 30, 30))
 
         img.save('img/lb.png')
         with open('img/lb.png', 'rb') as f:
