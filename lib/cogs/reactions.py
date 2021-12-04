@@ -30,8 +30,8 @@ class Reactions(Cog):
             print(f"{payload.member.display_name} reacted with {payload.emoji.name}")
             emoji = switcher.get(payload.emoji.name)
             #check if emoji was from 1 to 5 and if voting is still active for this submission
-            challengeID = db.field("SELECT challengeID FROM submission WHERE votingMsgID = ?", payload.message_id)
-            votingEndDate = db.field("SELECT votingEndDate FROM challenge WHERE challengeID = ?", challengeID)
+            challengeID = db.field("SELECT challengeID FROM submissions WHERE votingMsgID = ?", payload.message_id)
+            votingEndDate = db.field("SELECT votingEndDate FROM challenges WHERE challengeID = ?", challengeID)
             if emoji != None and votingEndDate > datetime.utcnow().isoformat(timespec='seconds', sep=' '):
                 print("vote added to DB")
                 #check if new vote or a change of vote

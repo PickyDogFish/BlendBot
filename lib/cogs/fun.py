@@ -75,21 +75,21 @@ class Fun(Cog):
             if ctx.message.attachments[0].size > 8000000:
                 await ctx.send("Please upload a smaller file (max 8 mb)")
             else:
-                if (db.field("SELECT msgID FROM submission WHERE challengeID = ? AND userID = ?", chalID, ctx.author.id) == None):
-                    db.execute("INSERT INTO submission (userID, msgID, challengeID) VALUES (?, ?, ?)", ctx.author.id, ctx.message.id, chalID)
+                if (db.field("SELECT msgID FROM submissions WHERE challengeID = ? AND userID = ?", chalID, ctx.author.id) == None):
+                    db.execute("INSERT INTO submissions (userID, msgID, challengeID) VALUES (?, ?, ?)", ctx.author.id, ctx.message.id, chalID)
                 else:
-                    db.execute("UPDATE submission SET msgID = ? WHERE challengeID = ? AND userID = ?", ctx.message.id, chalID, ctx.author.id)
+                    db.execute("UPDATE submissions SET msgID = ? WHERE challengeID = ? AND userID = ?", ctx.message.id, chalID, ctx.author.id)
                 await ctx.message.add_reaction("✅")
         #for custom challenge submissions
         elif len(ctx.message.attachments) > 0 and ctx.channel.id == CUSTOM_SUBMIT_ID:
             challengeID = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 2")
-            if db.field("SELECT endDate FROM challenge WHERE challengeID = ?", challengeID) < datetime.utcnow().isoformat(timespec='seconds', sep=' '):
+            if db.field("SELECT endDate FROM challenges WHERE challengeID = ?", challengeID) < datetime.utcnow().isoformat(timespec='seconds', sep=' '):
                 await ctx.send("No custom challenges currently active.")
             else:
-                if (db.field("SELECT msgID FROM submission WHERE challengeID = ? AND userID = ?", challengeID, ctx.author.id) == None):
-                    db.execute("INSERT INTO submission (userID, msgID, challengeID) VALUES (?, ?, ?)", ctx.author.id, ctx.message.id, challengeID)
+                if (db.field("SELECT msgID FROM submissions WHERE challengeID = ? AND userID = ?", challengeID, ctx.author.id) == None):
+                    db.execute("INSERT INTO submissions (userID, msgID, challengeID) VALUES (?, ?, ?)", ctx.author.id, ctx.message.id, challengeID)
                 else:
-                    db.execute("UPDATE submission SET msgID = ? WHERE challengeID = ? AND userID = ?", ctx.message.id, challengeID, ctx.author.id)
+                    db.execute("UPDATE submissions SET msgID = ? WHERE challengeID = ? AND userID = ?", ctx.message.id, challengeID, ctx.author.id)
                 await ctx.message.add_reaction("✅")
 
     @command(name="daily")
@@ -102,7 +102,7 @@ class Fun(Cog):
         if ctx.channel.id == CUSTOM_SUBMIT_ID:
             now = datetime.utcnow()
             challengeID = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 2")
-            untill = db.field("SELECT endDate FROM challenge WHERE challengeID = ?", challengeID)
+            untill = db.field("SELECT endDate FROM challenges WHERE challengeID = ?", challengeID)
             if untill < now.isoformat(timespec='seconds', sep=' '):
                 await ctx.send("No special challenge currently active.")
             else:
@@ -226,6 +226,10 @@ class Fun(Cog):
             role = get(self.bot.guild.roles, name="Helper")
             await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).add_roles(role)
             await ctx.send("Assigned role Helper")
+        elif roleName.lower() == "dailyping":
+            role = get(self.bot.guild.roles, name="DailyPing")
+            await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).add_roles(role)
+            await ctx.send("Assigned role DailyPing")
         else:
             await ctx.send("Cant find role named \"" + roleName + "\"")
 
@@ -253,7 +257,7 @@ class Fun(Cog):
     #@command(name="portfolio")
     async def show_portfolio(self, ctx):
         image_types = ["png", "jpeg", "gif", "jpg"]
-        submissions = db.column("SELECT votingMsgID FROM submission WHERE userID = ? AND votingMsgID IS NOT NULL", ctx.author.id)
+        submissions = db.column("SELECT votingMsgID FROM submissions WHERE userID = ? AND votingMsgID IS NOT NULL", ctx.author.id)
         votingChannel = self.bot.get_channel(VOTING_CHANNEL_ID)
 
         imgHeight = 0
@@ -270,14 +274,14 @@ class Fun(Cog):
 
     @command(name="stats", aliases=["stat", "statistics"])
     async def show_stats(self,ctx):
-        submissionNum = db.field("SELECT COUNT(msgID) FROM submission WHERE votingMsgID IS NOT NULL AND userID = ?", ctx.author.id)
+        submissionNum = db.field("SELECT COUNT(msgID) FROM submissions WHERE votingMsgID IS NOT NULL AND userID = ?", ctx.author.id)
 
 
         stats = "All-time points: " + str(db.field("SELECT renderXP FROM users WHERE userID = ?", ctx.author.id)) + "\n"
         stats = stats + "Number of submissions: " + str(submissionNum) + "\n"
         if submissionNum != 0:
-            stats = stats + "Average points per submission: " + "{:.2f}".format(round(db.field("SELECT avg(points) FROM (SELECT SUM(vote) as points FROM submission NATURAL JOIN votes WHERE userID = ? GROUP BY votingMsgID)", ctx.author.id), 2)) + "\n"
-            stats = stats + "Average vote received: " + "{:.2f}".format(round(db.field("SELECT avg(vote) FROM (SELECT avg(vote) as vote FROM submission NATURAL JOIN votes WHERE userID = ? GROUP BY votingMsgID)", ctx.author.id), 2)) + "\n"
+            stats = stats + "Average points per submission: " + "{:.2f}".format(round(db.field("SELECT avg(points) FROM (SELECT SUM(vote) as points FROM submissions NATURAL JOIN votes WHERE userID = ? GROUP BY votingMsgID)", ctx.author.id), 2)) + "\n"
+            stats = stats + "Average vote received: " + "{:.2f}".format(round(db.field("SELECT avg(vote) FROM (SELECT avg(vote) as vote FROM submissions NATURAL JOIN votes WHERE userID = ? GROUP BY votingMsgID)", ctx.author.id), 2)) + "\n"
         stats = stats + "Average vote given: " + "{:.2f}".format(round(db.field("SELECT avg(vote) FROM votes WHERE voterID = ? ", ctx.author.id), 2))
 
         embed = Embed(title="Statistics for " +ctx.author.display_name, description=stats)

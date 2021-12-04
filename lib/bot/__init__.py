@@ -89,7 +89,7 @@ class Bot(BotBase):
         print("Bot connected")
 
     async def get_daily_theme(self):
-        return db.field("SELECT themeName FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
+        return db.field("SELECT themeName FROM challenges WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
 
     async def move_to_voting(self, channelID, msgID, userID):
         channel = self.get_channel(channelID)
@@ -125,10 +125,10 @@ class Bot(BotBase):
 
 
     async def daily_challenge(self):
-        await self.get_channel(LOG_CHANNEL_ID).send("Running daily challenge function")
+        await self.get_channel(LOG_CHANNEL_ID).send("Running daily challenges function")
         challengeID, previousChallengeID = db.record("SELECT currentChallengeID, previousChallengeID FROM currentChallenge WHERE challengeTypeID = 0")
         #count votes
-        scores = db.records("SELECT userID, msgID, challengeID, SUM(vote) FROM submission NATURAL JOIN votes WHERE challengeID = ? GROUP BY msgID", previousChallengeID)
+        scores = db.records("SELECT userID, msgID, challengeID, SUM(vote) FROM submissions NATURAL JOIN votes WHERE challengeID = ? GROUP BY msgID", previousChallengeID)
         isSubmission = False
         voteCountText = ""
 
@@ -160,32 +160,32 @@ class Bot(BotBase):
 
         #if there were any submissions, send the vote counts, remake leaderboard
         if isSubmission:
-            countTheme, startDate = db.record("SELECT themeName, startDate FROM challenge WHERE challengeID = ?", previousChallengeID)
+            countTheme, startDate = db.record("SELECT themeName, startDate FROM challenges WHERE challengeID = ?", previousChallengeID)
             voteCountEmbed = Embed(title="Vote counts for " + countTheme + ", which started on " + datetime.fromisoformat(startDate).date().isoformat() + ":", description=voteCountText)
             await self.get_channel(VOTING_CHANNEL_ID).send(embed=voteCountEmbed)
             await self.clear_leaderboard()
             await self.make_leaderboard()
 
         #move things to voting
-        themeName = db.field("SELECT themeName FROM challenge WHERE challengeID = ?", challengeID)
-        if db.record("SELECT userID, msgID FROM submission WHERE challengeID = ?", challengeID) != None:
+        themeName = db.field("SELECT themeName FROM challenges WHERE challengeID = ?", challengeID)
+        if db.record("SELECT userID, msgID FROM submissions WHERE challengeID = ?", challengeID) != None:
             preSubEmbed = Embed(colour = 0x5965F2, title="Submissions for the theme " + themeName)
             await self.get_channel(VOTING_CHANNEL_ID).send(embed=preSubEmbed)
-            subs = db.records("SELECT userID, msgID FROM submission WHERE challengeID = ?", challengeID)
+            subs = db.records("SELECT userID, msgID FROM submissions WHERE challengeID = ?", challengeID)
             for userID, msgID in subs:
                 votingMsgID = await self.move_to_voting(SUBMIT_CHANNEL_ID, msgID, userID)
-                db.execute("UPDATE submission SET votingMsgID = ? WHERE msgID = ?", votingMsgID, msgID)
+                db.execute("UPDATE submissions SET votingMsgID = ? WHERE msgID = ?", votingMsgID, msgID)
         else:
             await self.get_channel(VOTING_CHANNEL_ID).send("Looks like there are no submissions for the theme " + themeName)
 
-        #createsnew challenge entry in db, make announcement, set bot status
+        #createsnew challenges entry in db, make announcement, set bot status
         #TODO make it only select from the pool of not recently used themes
         newDailyTheme = db.field("SELECT themeName FROM (SELECT * FROM themes WHERE themeStatus = 1 ORDER BY lastUsed LIMIT 50) AS notUsed WHERE themeStatus = 1 ORDER BY RANDOM() LIMIT 1")
-        db.execute("INSERT INTO challenge (themeName, startDate, endDate, votingEndDate) VALUES (?, ?, ?, ?)", newDailyTheme, datetime.utcnow().isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(hours=24)).isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(days=2)).isoformat(timespec='seconds', sep=' '))
-        newChallengeID = db.field("SELECT challengeID, themeName FROM challenge WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
+        db.execute("INSERT INTO challenges (themeName, startDate, endDate, votingEndDate) VALUES (?, ?, ?, ?)", newDailyTheme, datetime.utcnow().isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(hours=24)).isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(days=2)).isoformat(timespec='seconds', sep=' '))
+        newChallengeID = db.field("SELECT challengeID, themeName FROM challenges WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
         db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '), newDailyTheme)
         db.execute("UPDATE currentChallenge SET currentChallengeID = ?, previousChallengeID = ? WHERE challengeTypeID = 0", newChallengeID, challengeID)
-        embeded = Embed(colour = 16754726, title="The new theme for the daily challenge is: ", description="**"+newDailyTheme.upper()+ "**")
+        embeded = Embed(colour = 16754726, title="<@&916631404295618630>, the new theme for the daily challenge is: ", description="**"+newDailyTheme.upper()+ "**")
         await self.get_channel(SUBMIT_CHANNEL_ID).send(embed=embeded)
         await self.change_presence(activity=Activity(type=ActivityType.watching, name = "you make " + newDailyTheme))
         print(newDailyTheme)
@@ -198,16 +198,16 @@ class Bot(BotBase):
         await self.get_channel(LOG_CHANNEL_ID).send("Reminder to implement weekly challenges")
 
     async def custom_challenge(self):
-        await self.get_channel(LOG_CHANNEL_ID).send("Running custom challenge function.")
+        await self.get_channel(LOG_CHANNEL_ID).send("Running custom_challenge function.")
         challengeID = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 2")
-        themeName, startDate, endDate, votingEndDate, imageLink = db.record("SELECT themeName, startDate, endDate, votingEndDate, imageLink FROM challenge WHERE challengeID = ?", challengeID)
+        themeName, startDate, endDate, votingEndDate, imageLink = db.record("SELECT themeName, startDate, endDate, votingEndDate, imageLink FROM challenges WHERE challengeID = ?", challengeID)
         previousChallengeID = db.field("SELECT previousChallengeID FROM currentChallenge WHERE challengeTypeID = 2")
-        prevThemeName, prevStartDate, prevEndDate, prevVotingEndDate = db.record("SELECT themeName, startDate, endDate, votingEndDate FROM challenge WHERE challengeID = ?", previousChallengeID)
+        prevThemeName, prevStartDate, prevEndDate, prevVotingEndDate = db.record("SELECT themeName, startDate, endDate, votingEndDate FROM challenges WHERE challengeID = ?", previousChallengeID)
         if startDate > datetime.utcnow().isoformat(timespec='seconds', sep=' '):
             numOfDays = (datetime.fromisoformat(endDate) - datetime.fromisoformat(startDate)).days
             numOfVotingDays = (datetime.fromisoformat(votingEndDate) - datetime.fromisoformat(startDate)).days
             print(numOfDays)
-            db.execute("UPDATE challenge SET startDate = ?, endDate = ?, votingEndDate = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(days=numOfDays)).isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(days=numOfVotingDays)).isoformat(timespec='seconds', sep=' '))
+            db.execute("UPDATE challenges SET startDate = ?, endDate = ?, votingEndDate = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(days=numOfDays)).isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(days=numOfVotingDays)).isoformat(timespec='seconds', sep=' '))
 
             customChallengeEmbed = Embed(title="Custom challenge: " + themeName, description="You have **" + str(numOfDays) + " days** to submit your artworks.")
             customChallengeEmbed.set_image(url=imageLink)
@@ -218,7 +218,7 @@ class Bot(BotBase):
         if prevVotingEndDate != None and datetime.fromisoformat(prevVotingEndDate).date() == datetime.utcnow().date():
             await self.get_channel(LOG_CHANNEL_ID).send("Counting votes of previous custom challenge")
             #count votes
-            scores = db.records("SELECT userID, msgID, challengeID, SUM(vote) FROM submission NATURAL JOIN votes WHERE challengeID = ? GROUP BY msgID", previousChallengeID)
+            scores = db.records("SELECT userID, msgID, challengeID, SUM(vote) FROM submissions NATURAL JOIN votes WHERE challengeID = ? GROUP BY msgID", previousChallengeID)
             isSubmission = False
             voteCountText = ""
 
@@ -259,7 +259,7 @@ class Bot(BotBase):
         if datetime.fromisoformat(votingEndDate).date() == datetime.utcnow().date():
             await self.get_channel(LOG_CHANNEL_ID).send("Counting votes of current custom challenge")
             #count votes
-            scores = db.records("SELECT userID, msgID, challengeID, SUM(vote) FROM submission NATURAL JOIN votes WHERE challengeID = ? GROUP BY msgID", challengeID)
+            scores = db.records("SELECT userID, msgID, challengeID, SUM(vote) FROM submissions NATURAL JOIN votes WHERE challengeID = ? GROUP BY msgID", challengeID)
             isSubmission = False
             voteCountText = ""
 
@@ -298,14 +298,14 @@ class Bot(BotBase):
 
         #if endDate is today, move things to voting
         elif datetime.fromisoformat(endDate).date() == datetime.utcnow().date():
-            await self.get_channel(LOG_CHANNEL_ID).send("Moving submissions for custom challenge to voting")
-            if db.record("SELECT userID, msgID FROM submission WHERE challengeID = ?", challengeID) != None:
+            await self.get_channel(LOG_CHANNEL_ID).send("Moving submissions for custom_challenge to voting")
+            if db.record("SELECT userID, msgID FROM submissions WHERE challengeID = ?", challengeID) != None:
                 preSubEmbed = Embed(colour = 0x5965F2, title="Submissions for the custom challenge " + themeName)
                 await self.get_channel(VOTING_CHANNEL_ID).send(embed=preSubEmbed)
-                subs = db.records("SELECT userID, msgID FROM submission WHERE challengeID = ?", challengeID)
+                subs = db.records("SELECT userID, msgID FROM submissions WHERE challengeID = ?", challengeID)
                 for userID, msgID in subs:
                     votingMsgID = await self.move_to_voting(CUSTOM_SUBMIT_ID, msgID, userID)
-                    db.execute("UPDATE submission SET votingMsgID = ? WHERE msgID = ?", votingMsgID, msgID)
+                    db.execute("UPDATE submissions SET votingMsgID = ? WHERE msgID = ?", votingMsgID, msgID)
             else:
                 await self.get_channel(VOTING_CHANNEL_ID).send("Looks like there are no submissions for the custom challenge " + themeName)
 
@@ -343,7 +343,7 @@ class Bot(BotBase):
             self.scheduler.add_job(self.weekly_challenge, CronTrigger(day_of_week=5, hour=7, minute=0))
             self.scheduler.add_job(self.custom_challenge, CronTrigger(hour=7, minute=0))
             self.scheduler.start()
-            lastTheme = db.field("SELECT themeName FROM challenge WHERE challengeID = (SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0)")
+            lastTheme = db.field("SELECT themeName FROM challenges WHERE challengeID = (SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0)")
             await self.change_presence(activity=Activity(type=ActivityType.watching, name = "you make " + lastTheme))
 
             self.ready = True
@@ -351,7 +351,7 @@ class Bot(BotBase):
             await self.get_channel(LOG_CHANNEL_ID).send("Bot ready.")
             print("bot ready")
         else:
-            lastTheme = db.field("SELECT themeName FROM challenge WHERE challengeID = (SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0)")
+            lastTheme = db.field("SELECT themeName FROM challenges WHERE challengeID = (SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0)")
             await self.change_presence(activity=Activity(type=ActivityType.watching, name = "you make " + lastTheme))
 
             await self.get_channel(LOG_CHANNEL_ID).send("Bot ready after reconnect.")

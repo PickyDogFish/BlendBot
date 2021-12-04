@@ -76,7 +76,7 @@ class Admin(Cog):
         if ctx.author.guild_permissions.administrator:
             if db.field("SELECT * FROM themes WHERE themeName = ?", theme) != None:
                 lastDaily = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0")
-                db.execute("UPDATE challenge SET themeName = ? WHERE challengeID = ?", theme, lastDaily)
+                db.execute("UPDATE challenges SET themeName = ? WHERE challengeID = ?", theme, lastDaily)
                 db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '), theme)
                 await self.bot.get_channel(SUBMIT_CHANNEL_ID).edit(name="Theme-" + theme)
                 #await ctx.channel.edit(name="Theme-" + theme)
@@ -174,8 +174,8 @@ class Admin(Cog):
     @command(name="setcustom")
     async def set_custom_challenge(self,ctx, name, link, numOfDays, numOfVotingDays):
         if ctx.author.guild_permissions.administrator:
-            db.execute("INSERT INTO challenge (challengeTypeID, themeName, startDate, endDate, votingEndDate, imageLink) VALUES (2, ?, ?, ?, ?, ?)", name, (datetime.utcnow() + timedelta(days=1)).isoformat(timespec='seconds', sep=' '), (datetime.utcnow()+timedelta(days=int(numOfDays)+1)).isoformat(timespec='seconds', sep=' '),(datetime.utcnow() + timedelta(days=int(numOfVotingDays) + int(numOfDays)+1)).isoformat(timespec='seconds', sep=' '), link)
-            newChallengeID = db.field("SELECT challengeID, themeName FROM challenge WHERE challengeTypeID = 2 ORDER BY challengeID DESC")
+            db.execute("INSERT INTO challenges (challengeTypeID, themeName, startDate, endDate, votingEndDate, imageLink) VALUES (2, ?, ?, ?, ?, ?)", name, (datetime.utcnow() + timedelta(days=1)).isoformat(timespec='seconds', sep=' '), (datetime.utcnow()+timedelta(days=int(numOfDays)+1)).isoformat(timespec='seconds', sep=' '),(datetime.utcnow() + timedelta(days=int(numOfVotingDays) + int(numOfDays)+1)).isoformat(timespec='seconds', sep=' '), link)
+            newChallengeID = db.field("SELECT challengeID, themeName FROM challenges WHERE challengeTypeID = 2 ORDER BY challengeID DESC")
             previousChallengeID = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 2")
             db.execute("UPDATE currentChallenge SET currentChallengeID = ?, previousChallengeID = ? WHERE challengeTypeID = 2", newChallengeID, previousChallengeID)
             await ctx.send("Set the next custom challenge.")
