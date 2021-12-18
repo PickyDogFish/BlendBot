@@ -70,13 +70,13 @@ class Reactions(Cog):
                 await self.bot.get_guild(GUILD_ID).get_member(payload.user_id).add_roles(role)
 
         #other role assignments
-        if payload.message_id == 921829344685465603:
+        if payload.message_id == 921838842351349820:
             #DailyPing role
             if payload.emoji.name == "defaultcube":
                 role = get(self.bot.guild.roles, name="DailyPing")
                 await self.bot.get_guild(GUILD_ID).get_member(payload.user_id).add_roles(role)
             #Helper role
-            elif payload.emoji.name == "helmet_with_cross":
+            elif payload.emoji.name == "helper":
                 role = get(self.bot.guild.roles, name="Helper")
                 await self.bot.get_guild(GUILD_ID).get_member(payload.user_id).add_roles(role)
 
