@@ -37,6 +37,9 @@ LOG_CHANNEL_ID = 864912275864158218
 BOT_SPAM_CHANNEL_ID = 831471855910780988
 CUSTOM_SUBMIT_ID = 867685564211789824
 
+DAILY_PING_ROLE = 916450288427225098
+
+#testing server IDs
 if testing:
     GENERAL_CHANNEL_ID = 835427910201507860
     SUBMIT_CHANNEL_ID = 835429505257963550
@@ -47,13 +50,8 @@ if testing:
     BOT_TESTING_CHANNEL_ID = 865206590336532510
     BOT_SPAM_CHANNEL_ID = BOT_TESTING_CHANNEL_ID
     CUSTOM_SUBMIT_ID = 867724649223946240
+    DAILY_PING_ROLE = 916631404295618630
 
-
-#testing server ids
-#GENERAL_CHANNEL_ID = 835427910201507860
-#VOTING_CHANNEL_ID = 835429490464129054
-#SUBMIT_CHANNEL_ID = 835429505257963550
-#LB_CHANNEL_ID = 857997935244869652
 
 class Bot(BotBase):
     def __init__(self):
@@ -179,14 +177,15 @@ class Bot(BotBase):
             await self.get_channel(VOTING_CHANNEL_ID).send("Looks like there are no submissions for the theme " + themeName)
 
         #createsnew challenges entry in db, make announcement, set bot status
-        #TODO make it only select from the pool of not recently used themes
         newDailyTheme = db.field("SELECT themeName FROM (SELECT * FROM themes WHERE themeStatus = 1 ORDER BY lastUsed LIMIT 50) AS notUsed WHERE themeStatus = 1 ORDER BY RANDOM() LIMIT 1")
         db.execute("INSERT INTO challenges (themeName, startDate, endDate, votingEndDate) VALUES (?, ?, ?, ?)", newDailyTheme, datetime.utcnow().isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(hours=24)).isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(days=2)).isoformat(timespec='seconds', sep=' '))
         newChallengeID = db.field("SELECT challengeID, themeName FROM challenges WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
         db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '), newDailyTheme)
         db.execute("UPDATE currentChallenge SET currentChallengeID = ?, previousChallengeID = ? WHERE challengeTypeID = 0", newChallengeID, challengeID)
-        embeded = Embed(colour = 16754726, title="<@&916631404295618630>, the new theme for the daily challenge is: ", description="**"+newDailyTheme.upper()+ "**")
-        await self.get_channel(SUBMIT_CHANNEL_ID).send(embed=embeded)
+
+        dailyPingRole = get(self.guild.roles, name="DailyPing")
+        embeded = Embed(colour = 16754726, title="The new theme for the daily challenge is: ", description="**"+newDailyTheme.upper()+ "**")
+        await self.get_channel(SUBMIT_CHANNEL_ID).send(dailyPingRole.mention, embed=embeded)
         await self.change_presence(activity=Activity(type=ActivityType.watching, name = "you make " + newDailyTheme))
         print(newDailyTheme)
         #apparently it can get stuck on renaming the channel (hopefully not a problem when doing once a day)...

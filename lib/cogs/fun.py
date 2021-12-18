@@ -251,6 +251,10 @@ class Fun(Cog):
             role = get(self.bot.guild.roles, name="Helper")
             await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).remove_roles(role)
             await ctx.send("Removed role Helper")
+        elif roleName.lower() == "dailyping":
+            role = get(self.bot.guild.roles, name="DailyPing")
+            await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).remove_roles(role)
+            await ctx.send("Removed role DailyPing")
         else:
             await ctx.send("Cant find role named \"" + roleName + "\"")
 

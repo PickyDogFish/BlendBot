@@ -55,6 +55,7 @@ class Reactions(Cog):
             msg = await channel.fetch_message(payload.message_id)
             await msg.remove_reaction(payload.emoji, user)
 
+        #preferred software role assignment
         if payload.message_id == 868898232699338773:
             if payload.emoji.name == "blender":
                 role = get(self.bot.guild.roles, name="Blender")
@@ -67,7 +68,17 @@ class Reactions(Cog):
             elif payload.emoji.name == "C4D":
                 role = get(self.bot.guild.roles, name="C4D")
                 await self.bot.get_guild(GUILD_ID).get_member(payload.user_id).add_roles(role)
-            
+
+        #other role assignments
+        if payload.message_id == 921829344685465603:
+            #DailyPing role
+            if payload.emoji.name == "defaultcube":
+                role = get(self.bot.guild.roles, name="DailyPing")
+                await self.bot.get_guild(GUILD_ID).get_member(payload.user_id).add_roles(role)
+            #Helper role
+            elif payload.emoji.name == "helmet_with_cross":
+                role = get(self.bot.guild.roles, name="Helper")
+                await self.bot.get_guild(GUILD_ID).get_member(payload.user_id).add_roles(role)
 
 
 
