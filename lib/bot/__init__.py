@@ -79,12 +79,9 @@ class Bot(BotBase):
 
         with open("./lib/bot/token.0", "r", encoding="utf-8") as tk:
             self.TOKEN = tk.read()
-
-        print("bot running")
+        print("running super with token")
         super().run(self.TOKEN, reconnect = True)
-
-    async def on_connect(self):
-        print("Bot connected")
+        print("bot running")
 
     async def get_daily_theme(self):
         return db.field("SELECT themeName FROM challenges WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
@@ -346,7 +343,8 @@ class Bot(BotBase):
             await self.change_presence(activity=Activity(type=ActivityType.watching, name = "you make " + lastTheme))
 
             self.ready = True
-
+            print(GUILD_ID)
+            print(self.get_guild(GUILD_ID))
             await self.get_channel(LOG_CHANNEL_ID).send("Bot ready.")
             print("bot ready")
         else:
@@ -362,17 +360,32 @@ class Bot(BotBase):
 
     async def make_leaderboard(self):
         await self.get_channel(LOG_CHANNEL_ID).send("Making leaderboard.")
-        scores = db.records("SELECT userID, renderXP FROM users WHERE renderXP > 0 ORDER BY renderXP DESC LIMIT 100")
-        for score in scores:
-            user = self.get_user(score[0])
-            if user == None:
-                print("User not in the server anymore.")
-            else:
-                await self.show_lb_card(score[0])
+        # scores = db.records("SELECT userID, renderXP FROM users WHERE renderXP > 0 ORDER BY renderXP DESC LIMIT 100")
+        #print(date(date.today().year, 1, 1).strftime("%Y-%m-%d %H:%M:%S")) #2021-07-25 06:00:00
+        scores = db.records("SELECT userID, sum(vote) as renderXP FROM (SELECT * FROM submissions NATURAL JOIN votes NATURAL JOIN challenges WHERE endDate > ?) GROUP BY userID ORDER BY renderXP DESC", date(date.today().year, 1, 1).strftime("%Y-%m-%d %H:%M:%S"))
+        # for score in scores:
+        #     user = self.get_user(score[0])
+        #     print(i)
+        #     if user == None:
+        #         print("User not in the server anymore.")
+        #     else:
+        #         await self.show_lb_card(score[0], score[1], i)
                 #text = "Number of points: " + str(score[1]) + "   Level: " + str(int(sqrt(score[1]*40)//10)) + "\n\n"
                 #embed = Embed(colour = 0xFF0000, title=text)
                 #embed.set_author(name = user.display_name, icon_url=user.avatar_url)
                 #await self.get_channel(LB_CHANNEL_ID).send(embed=embed)
+
+        notInServer = 0
+        for i in range(len(scores)):
+            score = scores[i]
+            user = self.get_user(score[0])
+            print(i)
+            if user == None:
+                notInServer +=1
+                print("User not in the server anymore.")
+            else:
+                await self.show_lb_card(user, score[1], i+1-notInServer)
+
 
     async def clear_leaderboard(self):
         msg=[]
@@ -383,11 +396,9 @@ class Bot(BotBase):
                 msg.append(message)
             await channel.delete_messages(msg)
 
-    async def show_lb_card(self, userID):
-        renderXP = db.field("SELECT renderXP FROM users WHERE userID = ?", userID)
-        place = db.field("SELECT COUNT(userID) FROM users WHERE renderXP >= ?", renderXP)
-
-        curUser = self.get_user(userID)
+    async def show_lb_card(self, curUser, renderXP, place):
+        #renderXP = db.field("SELECT renderXP FROM users WHERE userID = ?", userID)
+        #place = db.field("SELECT COUNT(userID) FROM users WHERE renderXP >= ?", renderXP)
 
         img = Image.new('RGB', (720, 128), color = (30, 30, 30))
         await curUser.avatar_url_as(format="png", size=128).save(fp="img/pfp.png")

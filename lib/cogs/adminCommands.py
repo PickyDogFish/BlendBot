@@ -17,6 +17,12 @@ class Admin(Cog):
     async def on_ready(self):
         print("admin cog ready")
 
+    @command(name="addusertodb")
+    async def add_user_to_db(self, ctx, userID):
+        if ctx.author.guild_permissions.administrator:
+            db.execute("INSERT OR IGNORE INTO users (UserID) VALUES (?)", userID)
+            await ctx.send(f"Added {userID} to the database!")
+
     @command(name="clear")
     async def clear(self, ctx, num_of_msgs_to_delete):
         if ctx.author.guild_permissions.administrator:
