@@ -88,34 +88,39 @@ class Bot(BotBase):
 
     async def move_to_voting(self, channelID, msgID, userID):
         channel = self.get_channel(channelID)
-        msg = await channel.fetch_message(msgID)
-        #just double checking if the embed is still there
-        if msg.attachments:
-            f = msg.attachments[0].url
-            format = f.split(".")[-1]
-            if format in ["png", "jpg"]:
-                embeded = Embed(title="Has collected 0 votes", colour = 0x5965F2)
-                embeded.set_author(name = self.get_user(userID).display_name, icon_url=self.get_user(userID).avatar_url)
-                embeded.set_image(url=f)
-                message = await self.get_channel(VOTING_CHANNEL_ID).send(embed = embeded)
 
-            else:
-                #attachment is a video
-                attach = await msg.attachments[0].to_file()
-                embeded = Embed(title="Has collected 0 votes", colour = 0x5965F2)
-                embeded.set_author(name = self.get_user(userID).display_name, icon_url=self.get_user(userID).avatar_url)
-                message = await self.get_channel(VOTING_CHANNEL_ID).send(embed=embeded)
-                try:
-                    await self.get_channel(VOTING_CHANNEL_ID).send(file = attach)
-                except:
-                    print("error while moving video, possibly file too big")
-                    await self.get_channel(VOTING_CHANNEL_ID).send(embed = Embed(colour = 0x5965F2, title="Could not move the submission.", description=f"[Link to original message]({msg.jump_url})"))
-            await message.add_reaction("1️⃣")
-            await message.add_reaction("2️⃣")
-            await message.add_reaction("3️⃣")
-            await message.add_reaction("4️⃣")
-            await message.add_reaction("5️⃣")
-            return message.id
+        try:
+            msg = await channel.fetch_message(msgID)
+            #just double checking if the embed is still there
+            if msg.attachments:
+                f = msg.attachments[0].url
+                format = f.split(".")[-1]
+                if format in ["png", "jpg"]:
+                    embeded = Embed(title="Has collected 0 votes", colour = 0x5965F2)
+                    embeded.set_author(name = self.get_user(userID).display_name, icon_url=self.get_user(userID).avatar_url)
+                    embeded.set_image(url=f)
+                    message = await self.get_channel(VOTING_CHANNEL_ID).send(embed = embeded)
+
+                else:
+                    #attachment is a video
+                    attach = await msg.attachments[0].to_file()
+                    embeded = Embed(title="Has collected 0 votes", colour = 0x5965F2)
+                    embeded.set_author(name = self.get_user(userID).display_name, icon_url=self.get_user(userID).avatar_url)
+                    message = await self.get_channel(VOTING_CHANNEL_ID).send(embed=embeded)
+                    try:
+                        await self.get_channel(VOTING_CHANNEL_ID).send(file = attach)
+                    except:
+                        print("error while moving video, possibly file too big")
+                        await self.get_channel(VOTING_CHANNEL_ID).send(embed = Embed(colour = 0x5965F2, title="Could not move the submission.", description=f"[Link to original message]({msg.jump_url})"))
+                await message.add_reaction("1️⃣")
+                await message.add_reaction("2️⃣")
+                await message.add_reaction("3️⃣")
+                await message.add_reaction("4️⃣")
+                await message.add_reaction("5️⃣")
+                return message.id
+        except:
+            self.get_channel(LOG_CHANNEL_ID).send("Error moving things to voting. Can be caused by user deleting submission.")
+
 
 
 
@@ -135,13 +140,16 @@ class Bot(BotBase):
 
         for submission in scores:
             isSubmission = True
-            voteCountText += self.get_user(submission[0]).display_name + " collected " + str(submission[3]) + " points\n"
-            #assigns the Daily Wizard role if renderXP was 0
-            renderXP = db.field("SELECT renderXP FROM users WHERE userID = ?", submission[0]) 
-            if renderXP == 0:
-                role = get(self.guild.roles, name="Daily Wizard")
-                await self.get_guild(GUILD_ID).get_member(submission[0]).add_roles(role)
-            db.execute("UPDATE users SET renderXP = renderXP + ? WHERE userID = ?", submission[3], submission[0])
+            try:
+                voteCountText += self.get_user(submission[0]).display_name + " collected " + str(submission[3]) + " points\n"
+                #assigns the Daily Wizard role if renderXP was 0
+                renderXP = db.field("SELECT renderXP FROM users WHERE userID = ?", submission[0]) 
+                if renderXP == 0:
+                    role = get(self.guild.roles, name="Daily Wizard")
+                    await self.get_guild(GUILD_ID).get_member(submission[0]).add_roles(role)
+                db.execute("UPDATE users SET renderXP = renderXP + ? WHERE userID = ?", submission[3], submission[0])
+            except:
+                await self.get_channel(LOG_CHANNEL_ID).send("Error while counting pre-vote score")
         
         #checking if users moved up in rank, send rank up messages
         tempIndex = 0
@@ -169,7 +177,8 @@ class Bot(BotBase):
             subs = db.records("SELECT userID, msgID FROM submissions WHERE challengeID = ?", challengeID)
             for userID, msgID in subs:
                 votingMsgID = await self.move_to_voting(SUBMIT_CHANNEL_ID, msgID, userID)
-                db.execute("UPDATE submissions SET votingMsgID = ? WHERE msgID = ?", votingMsgID, msgID)
+                if votingMsgID != -1:
+                    db.execute("UPDATE submissions SET votingMsgID = ? WHERE msgID = ?", votingMsgID, msgID)
         else:
             await self.get_channel(VOTING_CHANNEL_ID).send("Looks like there are no submissions for the theme " + themeName)
 
