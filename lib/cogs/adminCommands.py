@@ -87,6 +87,7 @@ class Admin(Cog):
                 await self.bot.get_channel(SUBMIT_CHANNEL_ID).edit(name="Theme-" + theme)
                 #await ctx.channel.edit(name="Theme-" + theme)
                 await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name = "you make " + theme))
+                await ctx.send("The theme has been set to " + theme)
             else:
                 await ctx.channel.send("Theme not in pool")
 
@@ -102,43 +103,43 @@ class Admin(Cog):
 
 
     #puts the old data into the new database, all paths are hardcoded
-    @command(name="parseolddata")
-    async def parse_old_data(self, ctx):
-        if ctx.author.guild_permissions.administrator:
-            await self.parse_user_data(ctx=ctx)
-            await self.parse_used_themes(ctx=ctx)
-            await self.parse_themes(ctx=ctx)
-            await self.parse_suggestions(ctx=ctx)
-            await ctx.send("Parsed old data")
+    # @command(name="parseolddata")
+    # async def parse_old_data(self, ctx):
+    #     if ctx.author.guild_permissions.administrator:
+    #         await self.parse_user_data(ctx=ctx)
+    #         await self.parse_used_themes(ctx=ctx)
+    #         await self.parse_themes(ctx=ctx)
+    #         await self.parse_suggestions(ctx=ctx)
+    #         await ctx.send("Parsed old data")
 
-    async def parse_user_data(self, ctx):
-        if ctx.author.guild_permissions.administrator:
-            with open("D:\BotGit\levels.json", "r+") as file:
-                data = json.load(file)
-                for user in data:
-                    db.execute("INSERT OR IGNORE INTO users (userID, msgXP, renderXP) VALUES (?,?,?)", user, int(data[user]["messagepoints"]), data[user]["dailypoints"])
+    # async def parse_user_data(self, ctx):
+    #     if ctx.author.guild_permissions.administrator:
+    #         with open("D:\BotGit\levels.json", "r+") as file:
+    #             data = json.load(file)
+    #             for user in data:
+    #                 db.execute("INSERT OR IGNORE INTO users (userID, msgXP, renderXP) VALUES (?,?,?)", user, int(data[user]["messagepoints"]), data[user]["dailypoints"])
 
-    async def parse_themes(self, ctx):
-        if ctx.author.guild_permissions.administrator:
-            with open("D:/BotGit/themes.txt", "r") as file:
-                for line in file:
-                    db.execute("INSERT OR IGNORE INTO themes (themeName, themeStatus) VALUES (?,1)", line.strip().replace("_", " "))
+    # async def parse_themes(self, ctx):
+    #     if ctx.author.guild_permissions.administrator:
+    #         with open("D:/BotGit/themes.txt", "r") as file:
+    #             for line in file:
+    #                 db.execute("INSERT OR IGNORE INTO themes (themeName, themeStatus) VALUES (?,1)", line.strip().replace("_", " "))
 
-    async def parse_used_themes(self, ctx):
-        if ctx.author.guild_permissions.administrator:
-            with open("D:/BotGit/usedThemes.txt", "r") as file:
-                for line in file:
-                    db.execute("INSERT OR IGNORE INTO themes (themeName, themeStatus, lastUsed) VALUES (?,1,?)", line.strip().replace("_", " "), datetime.utcnow().isoformat())
+    # async def parse_used_themes(self, ctx):
+    #     if ctx.author.guild_permissions.administrator:
+    #         with open("D:/BotGit/usedThemes.txt", "r") as file:
+    #             for line in file:
+    #                 db.execute("INSERT OR IGNORE INTO themes (themeName, themeStatus, lastUsed) VALUES (?,1,?)", line.strip().replace("_", " "), datetime.utcnow().isoformat())
     
-    async def parse_suggestions(self, ctx):
-        if ctx.author.guild_permissions.administrator:
-            with open("D:/BotGit/suggestions.txt", "r") as file:
-                for line in file:
-                    db.execute("INSERT OR IGNORE INTO themes (themeName, themeStatus) VALUES (?,0)", line.strip().replace("_", " "))
+    # async def parse_suggestions(self, ctx):
+    #     if ctx.author.guild_permissions.administrator:
+    #         with open("D:/BotGit/suggestions.txt", "r") as file:
+    #             for line in file:
+    #                 db.execute("INSERT OR IGNORE INTO themes (themeName, themeStatus) VALUES (?,0)", line.strip().replace("_", " "))
 
 
     #sends a message of max 100 suggested themes
-    @command(name="showsuggestions")
+    @command(name="showsuggestions", aliases=["suggestions", "sugg"])
     async def show_suggestions(self, ctx):
         if ctx.author.guild_permissions.administrator:
             listOfSuggestions = db.column("SELECT themeName FROM themes WHERE themeStatus = 0 LIMIT 100")
@@ -192,11 +193,11 @@ class Admin(Cog):
             await self.bot.custom_challenge()
 
 
-    @command(name="customSQL")
-    async def run_custom_SQL(self, ctx, *, command):
-        if ctx.author.id in OWNER_IDS:
-            await self.bot.get_channel(LOG_CHANNEL_ID).send(ctx.author.name + " just ran custom SQL: " + command)
-            db.execute(command)
+    # @command(name="customSQL")
+    # async def run_custom_SQL(self, ctx, *, command):
+    #     if ctx.author.id in OWNER_IDS:
+    #         await self.bot.get_channel(LOG_CHANNEL_ID).send(ctx.author.name + " just ran custom SQL: " + command)
+    #         db.execute(command)
 
     @command(name="showvoters")
     async def show_voters(self, ctx):
@@ -206,6 +207,15 @@ class Admin(Cog):
             for id, count in voters:
                 names += self.bot.get_user(id).display_name +": " + str(count) + ", "
             await ctx.send(names)
+
+    @command(name="setisinserver")
+    async def set_isinserver(self,ctx):
+        if ctx.author.id in OWNER_IDS:
+            users = db.records("SELECT userID FROM users")
+            for user in users:
+                userObject = self.bot.get_user(user[0])
+                if userObject == None:
+                    db.execute("UPDATE users SET isInServer = 0 WHERE userID = ?", user[0])
 
 def setup(bot):
     bot.add_cog(Admin(bot))
