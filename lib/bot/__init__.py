@@ -119,71 +119,72 @@ class Bot(BotBase):
                 await message.add_reaction("5️⃣")
                 return message.id
         except:
-            self.get_channel(LOG_CHANNEL_ID).send("Error moving things to voting. Can be caused by user deleting submission.")
+            await self.get_channel(LOG_CHANNEL_ID).send("Error moving things to voting. Can be caused by user deleting submission.")
 
+    # returns a dict of "userID": "rank" for given list of users. Calculates points up to beforeDate
+    async def get_ranks(self, userList, beforeDate):
+        ranks = {}
+        for user in userList:
+            renderXP = db.field("SELECT sum(vote) FROM (SELECT * FROM submissions NATURAL JOIN votes NATURAL JOIN challenges NATURAL JOIN users WHERE endDate > ? AND endDate < ?) WHERE userID = ?", self.get_start_of_year(), beforeDate, user)
+            rank = db.field("SELECT COUNT(userID) FROM (SELECT userID, sum(vote) as renderXP FROM (SELECT * FROM submissions NATURAL JOIN votes NATURAL JOIN challenges NATURAL JOIN users WHERE endDate > ? AND endDate < ?) WHERE isInServer = 1 GROUP BY userID) WHERE renderXP >= ?", self.get_start_of_year(), beforeDate, renderXP)
+            ranks[user] = rank
+        return ranks
 
-
-
-    async def daily_challenge(self):
-        await self.get_channel(LOG_CHANNEL_ID).send("Running daily challenges function")
-        challengeID, previousChallengeID = db.record("SELECT currentChallengeID, previousChallengeID FROM currentChallenge WHERE challengeTypeID = 0")
-        #count votes
-        scores = db.records("SELECT userID, msgID, challengeID, SUM(vote) FROM submissions NATURAL JOIN votes WHERE challengeID = ? GROUP BY msgID", previousChallengeID)
-        isSubmission = False
+    # sums up votes for given challenge, updates renderXP in database, sends vote count message, remakes leaderboard
+    async def count_votes(self, challengeID):
         voteCountText = ""
-
-        #saving ranks pre-vote count
-        previousRanks = []
-        for submission in scores:
-            renderXP = db.field("SELECT renderXP FROM users WHERE userID = ?", submission[0]) 
-            previousRanks.append(db.field("SELECT COUNT(userID) FROM users WHERE renderXP >= ?", renderXP))
+        scores = db.records("SELECT userID, msgID, SUM(vote) FROM submissions NATURAL JOIN votes WHERE challengeID = ? GROUP BY msgID", challengeID)
+        isSubmission = False
 
         for submission in scores:
             isSubmission = True
             try:
-                voteCountText += self.get_user(submission[0]).display_name + " collected " + str(submission[3]) + " points\n"
+                voteCountText += self.get_user(submission[0]).display_name + " collected " + str(submission[2]) + " points\n"
                 #assigns the Daily Wizard role if renderXP was 0
                 renderXP = db.field("SELECT renderXP FROM users WHERE userID = ?", submission[0]) 
                 if renderXP == 0:
                     role = get(self.guild.roles, name="Daily Wizard")
                     await self.get_guild(GUILD_ID).get_member(submission[0]).add_roles(role)
-                db.execute("UPDATE users SET renderXP = renderXP + ? WHERE userID = ?", submission[3], submission[0])
+                db.execute("UPDATE users SET renderXP = renderXP + ? WHERE userID = ?", submission[2], submission[0])
             except:
                 await self.get_channel(LOG_CHANNEL_ID).send("Error while counting pre-vote score")
         
-        #checking if users moved up in rank, send rank up messages
-        tempIndex = 0
-        for submission in scores:
-            renderXP = db.field("SELECT renderXP FROM users WHERE userID = ?", submission[0])
-            newRank = db.field("SELECT COUNT(userID) FROM users WHERE renderXP >= ?", renderXP)
-            print(previousRanks[tempIndex], newRank)
-            if previousRanks[tempIndex] > newRank:
-                await self.get_channel(BOT_SPAM_CHANNEL_ID).send(self.get_user(submission[0]).mention + f" moved up from {previousRanks[tempIndex]}. place to {newRank}. place!")
-            tempIndex += 1
-
-        #if there were any submissions, send the vote counts, remake leaderboard
         if isSubmission:
-            countTheme, startDate = db.record("SELECT themeName, startDate FROM challenges WHERE challengeID = ?", previousChallengeID)
+            countTheme, startDate = db.record("SELECT themeName, startDate FROM challenges WHERE challengeID = ?", challengeID)
             voteCountEmbed = Embed(title="Vote counts for " + countTheme + ", which started on " + datetime.fromisoformat(startDate).date().isoformat() + ":", description=voteCountText)
             await self.get_channel(VOTING_CHANNEL_ID).send(embed=voteCountEmbed)
             await self.clear_leaderboard()
             await self.make_leaderboard()
 
-        #move things to voting
+    # sends rank up messages, checks users who submitted for given challengeID
+    async def check_ranks(self, previousRanks, userList):
+        currRanks = await self.get_ranks(userList, (datetime.utcnow() + timedelta(hours=24)).isoformat(timespec='seconds', sep=' '))
+        for user in userList:
+            if previousRanks[user] > currRanks[user]:
+                userObj = self.get_user(user)
+                if userObj != None:
+                    await self.get_channel(BOT_SPAM_CHANNEL_ID).send(userObj.mention + f" moved up from {previousRanks[user]}. place to {currRanks[user]}. place!")
+                else:
+                    await self.get_channel(LOG_CHANNEL_ID).send("ERROR: Could not get user whole checking ranks.")
+
+    # moves all submissions to voting
+    async def move_all_submissions_to_voting(self, challengeID):
         themeName = db.field("SELECT themeName FROM challenges WHERE challengeID = ?", challengeID)
         if db.record("SELECT userID, msgID FROM submissions WHERE challengeID = ?", challengeID) != None:
             preSubEmbed = Embed(colour = 0x5965F2, title="Submissions for the theme " + themeName)
             await self.get_channel(VOTING_CHANNEL_ID).send(embed=preSubEmbed)
-            subs = db.records("SELECT userID, msgID FROM submissions WHERE challengeID = ?", challengeID)
-            for userID, msgID in subs:
+            submissions = db.records("SELECT userID, msgID FROM submissions WHERE challengeID = ?", challengeID)
+            for userID, msgID in submissions:
                 votingMsgID = await self.move_to_voting(SUBMIT_CHANNEL_ID, msgID, userID)
                 if votingMsgID != -1:
                     db.execute("UPDATE submissions SET votingMsgID = ? WHERE msgID = ?", votingMsgID, msgID)
         else:
             await self.get_channel(VOTING_CHANNEL_ID).send("Looks like there are no submissions for the theme " + themeName)
 
-        #createsnew challenges entry in db, make announcement, set bot status
-        newDailyTheme = db.field("SELECT themeName FROM (SELECT * FROM themes WHERE themeStatus = 1 ORDER BY lastUsed LIMIT 50) AS notUsed WHERE themeStatus = 1 ORDER BY RANDOM() LIMIT 1")
+    async def announce_new_daily_challenge(self):
+        challengeID = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0")
+        #creates new challenges entry in db, make announcement, set bot status
+        newDailyTheme = db.field("SELECT themeName FROM (SELECT * FROM themes WHERE themeStatus = 1 ORDER BY lastUsed LIMIT 50) WHERE themeStatus = 1 ORDER BY RANDOM() LIMIT 1")
         db.execute("INSERT INTO challenges (themeName, startDate, endDate, votingEndDate) VALUES (?, ?, ?, ?)", newDailyTheme, datetime.utcnow().isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(hours=24)).isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(days=2)).isoformat(timespec='seconds', sep=' '))
         newChallengeID = db.field("SELECT challengeID, themeName FROM challenges WHERE challengeTypeID = 0 ORDER BY challengeID DESC")
         db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '), newDailyTheme)
@@ -193,11 +194,22 @@ class Bot(BotBase):
         embeded = Embed(colour = 16754726, title="The new theme for the daily challenge is: ", description="**"+newDailyTheme.upper()+ "**")
         await self.get_channel(SUBMIT_CHANNEL_ID).send(dailyPingRole.mention, embed=embeded)
         await self.change_presence(activity=Activity(type=ActivityType.watching, name = "you make " + newDailyTheme))
-        print(newDailyTheme)
-        #apparently it can get stuck on renaming the channel (hopefully not a problem when doing once a day)...
-        print(newDailyTheme)
+        #there is a delay on the discord api, so dont change names too often
         await self.get_channel(SUBMIT_CHANNEL_ID).edit(name="Theme-" + newDailyTheme)
-        print(newDailyTheme)
+
+
+    async def daily_challenge(self):
+        await self.get_channel(LOG_CHANNEL_ID).send("Running daily challenges function")
+        challengeID, previousChallengeID = db.record("SELECT currentChallengeID, previousChallengeID FROM currentChallenge WHERE challengeTypeID = 0")
+        previousUsers = db.column("SELECT userID FROM submissions WHERE challengeID = ?", previousChallengeID)
+        previousEndDate = db.field("SELECT endDate FROM challenges WHERE challengeID = ?", previousChallengeID)
+        previousRanks = await self.get_ranks(previousUsers, previousEndDate)
+        await self.count_votes(previousChallengeID)
+        await self.check_ranks(previousRanks, previousUsers)
+
+        await self.move_all_submissions_to_voting(challengeID)
+        await self.announce_new_daily_challenge()
+
 
     async def weekly_challenge(self):
         await self.get_channel(LOG_CHANNEL_ID).send("Reminder to implement weekly challenges")
@@ -369,31 +381,22 @@ class Bot(BotBase):
 
     async def make_leaderboard(self):
         await self.get_channel(LOG_CHANNEL_ID).send("Making leaderboard.")
-        # scores = db.records("SELECT userID, renderXP FROM users WHERE renderXP > 0 ORDER BY renderXP DESC LIMIT 100")
-        #print(date(date.today().year, 1, 1).strftime("%Y-%m-%d %H:%M:%S")) #2021-07-25 06:00:00
-        scores = db.records("SELECT userID, sum(vote) as renderXP FROM (SELECT * FROM submissions NATURAL JOIN votes NATURAL JOIN challenges WHERE endDate > ?) GROUP BY userID ORDER BY renderXP DESC", date(date.today().year, 1, 1).strftime("%Y-%m-%d %H:%M:%S"))
-        # for score in scores:
-        #     user = self.get_user(score[0])
-        #     print(i)
-        #     if user == None:
-        #         print("User not in the server anymore.")
-        #     else:
-        #         await self.show_lb_card(score[0], score[1], i)
-                #text = "Number of points: " + str(score[1]) + "   Level: " + str(int(sqrt(score[1]*40)//10)) + "\n\n"
-                #embed = Embed(colour = 0xFF0000, title=text)
-                #embed.set_author(name = user.display_name, icon_url=user.avatar_url)
-                #await self.get_channel(LB_CHANNEL_ID).send(embed=embed)
+        scores = db.records("SELECT userID, sum(vote) as renderXP FROM (SELECT * FROM submissions NATURAL JOIN votes NATURAL JOIN challenges NATURAL JOIN users WHERE endDate > ?) WHERE isInServer = 1 GROUP BY userID ORDER BY renderXP DESC", date(date.today().year, 1, 1).strftime("%Y-%m-%d %H:%M:%S"))
 
-        notInServer = 0
-        for i in range(len(scores)):
+        for i in range(len(scores)-1, -1, -1):
             score = scores[i]
             user = self.get_user(score[0])
-            print(i)
+            sameScore = 0
+            for j in range(1, len(scores)-i):
+                if score[1] == scores[i-j][1]:
+                    sameScore += 1
+                else:
+                    break 
+            print(sameScore)
             if user == None:
-                notInServer +=1
-                print("User not in the server anymore.")
+                print("User not in the server anymore, but isInServer still 1.")
             else:
-                await self.show_lb_card(user, score[1], i+1-notInServer)
+                await self.show_lb_card(user, score[1], i+1 + sameScore)
 
 
     async def clear_leaderboard(self):
@@ -435,5 +438,8 @@ class Bot(BotBase):
         with open('img/lb.png', 'rb') as f:
             pic = discord.File(f)
             await self.get_channel(LB_CHANNEL_ID).send(file=pic)
+
+    def get_start_of_year(self):
+        return date(date.today().year, 1, 1).strftime("%Y-%m-%d %H:%M:%S")
 
 bot = Bot()
