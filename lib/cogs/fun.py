@@ -27,12 +27,15 @@ class Fun(Cog):
 
     @command(name="suggest")
     async def suggest_theme(self, ctx, *, sugg):
-        neki = db.field("SELECT themeName FROM themes WHERE themeName = ?", (sugg))
-        if (neki == None):
-            db.execute("INSERT INTO themes (themeName) VALUES (?)", sugg)
-            await ctx.send("Thank you for suggesting " + sugg + "!")
-        else:
-            await ctx.send("Theme has already been suggested")
+        if len(sugg) > 40:
+            await ctx.send("Please suggest a shorter theme.")
+        else: 
+            neki = db.field("SELECT themeName FROM themes WHERE themeName = ?", (sugg))
+            if (neki == None):
+                db.execute("INSERT INTO themes (themeName) VALUES (?)", sugg)
+                await ctx.send("Thank you for suggesting " + sugg + "!")
+            else:
+                await ctx.send("Theme has already been suggested.")
 
     @command(name="random")
     async def random_theme(self, ctx):
