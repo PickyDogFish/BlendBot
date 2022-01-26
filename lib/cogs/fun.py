@@ -150,7 +150,6 @@ class Fun(Cog):
     async def calculate_msg_level(self,xp):
         return (int(sqrt(xp*10)//10), sqrt(xp*10)%10)
 
-
     @command(name="level", aliases=["rank"])
     async def make_level_image(self, ctx, username=None):
         user = None
@@ -173,7 +172,7 @@ class Fun(Cog):
             await ctx.send("This user is a bot.")
             return
 
-        renderXP = db.field("SELECT renderXP FROM users WHERE userID = ?", user.id)
+        renderXP = db.field("SELECT SUM(vote) FROM votes NATURAL JOIN submissions WHERE userID = ?", user.id)
         (renderLvl, renderLeftoverXP, renderStep) = await self.calculate_render_level(renderXP)
         renderProgress = int(renderLeftoverXP/renderStep * 10) + 1 
 
@@ -186,8 +185,8 @@ class Fun(Cog):
         d = ImageDraw.Draw(img)
         d.text((148,10), user.name, font=ImageFont.truetype('fonts/arial.ttf', 30), fill=(230, 230, 230))
         small_fnt = ImageFont.truetype('fonts/arial.ttf', 20)
-        place = db.field("SELECT COUNT(userID) FROM users WHERE renderXP >= ?", renderXP)
-        d.text((148,115), "Rank:            lvl:        xp: ", font=small_fnt, fill=(230, 230, 230))
+        place = db.field("SELECT COUNT(userID) FROM (SELECT userID, SUM(vote) AS renderXP FROM votes NATURAL JOIN submissions GROUP BY userID) WHERE renderXP >= ?", renderXP)
+        d.text((148,115), "Rank:             lvl:        xp: ", font=small_fnt, fill=(230, 230, 230))
         d.text((210,107), "#" + str(place), font=ImageFont.truetype('fonts/arial.ttf', 30), fill=(230, 230, 230))
         d.text((375,107), str(renderLeftoverXP) + "/" + str(renderStep) + "       " , font=ImageFont.truetype('fonts/arial.ttf', 30), fill=(230, 230, 230))
         d.text((300,107), str(renderLvl), font=ImageFont.truetype('fonts/arial.ttf', 30), fill=(230, 230, 230))
@@ -199,9 +198,6 @@ class Fun(Cog):
         for i in range(0, renderProgress):
             d.rectangle((xpBarX, 60, xpBarX+20, 90), fill='lightblue')
             xpBarX += 25
-
-        
-
 
         img.save('img/level.png')
         with open('img/level.png', 'rb') as f:
