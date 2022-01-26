@@ -279,9 +279,7 @@ class Fun(Cog):
     @command(name="stats", aliases=["stat", "statistics"])
     async def show_stats(self,ctx):
         submissionNum = db.field("SELECT COUNT(msgID) FROM submissions WHERE votingMsgID IS NOT NULL AND userID = ?", ctx.author.id)
-
-
-        stats = "All-time points: " + str(db.field("SELECT renderXP FROM users WHERE userID = ?", ctx.author.id)) + "\n"
+        stats = "All-time points: " + str(db.field("SELECT SUM(vote) FROM votes NATURAL JOIN submissions WHERE userID = ?", ctx.author.id)) + "\n"
         stats = stats + "Number of submissions: " + str(submissionNum) + "\n"
         if submissionNum != 0:
             stats = stats + "Average points per submission: " + "{:.2f}".format(round(db.field("SELECT avg(points) FROM (SELECT SUM(vote) as points FROM submissions NATURAL JOIN votes WHERE userID = ? GROUP BY votingMsgID)", ctx.author.id), 2)) + "\n"
