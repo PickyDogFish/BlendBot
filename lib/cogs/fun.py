@@ -64,6 +64,8 @@ class Fun(Cog):
         helpText += "`$time:` Tells you how much time is left for the current daily challenge.\n\n"
         helpText += "`$level:` Tells you how much time you have spent on this server.\n\n"
         helpText += "`$stats:` Shows you some of your challenge statistics.\n\n"
+        helpText += "`$removerole [role]:` Removes the specified role.\n\n"
+
         embeded = Embed(title="Daily blend bot help page", colour = 16754726, description = helpText)
         await ctx.send(embed = embeded)
 
