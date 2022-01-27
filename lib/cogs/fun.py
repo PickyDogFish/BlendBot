@@ -30,7 +30,7 @@ class Fun(Cog):
         if len(sugg) > 40:
             await ctx.send("Please suggest a shorter theme.")
         else: 
-            neki = db.field("SELECT themeName FROM themes WHERE themeName = ?", (sugg))
+            neki = db.field("SELECT themeName FROM themes WHERE themeName = ? COLLATE NOCASE", (sugg))
             if (neki == None):
                 db.execute("INSERT INTO themes (themeName) VALUES (?)", sugg)
                 await ctx.send("Thank you for suggesting " + sugg + "!")
