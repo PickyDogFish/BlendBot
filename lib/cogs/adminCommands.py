@@ -151,9 +151,9 @@ class Admin(Cog):
     async def show_rejected(self, ctx):
         if ctx.author.guild_permissions.administrator:
             listOfRejected = db.column("SELECT themeName FROM themes WHERE themeStatus = -1")
-            for i in range(50, len(listOfRejected), 50):
-                await ctx.send(listOfRejected[i-50:i])
-                if i+50 > len(listOfRejected):
+            for i in range(20, len(listOfRejected), 20):
+                await ctx.send(listOfRejected[i-20:i])
+                if i+20 > len(listOfRejected):
                     await ctx.send(listOfRejected[i:])
 
     #sends a list of all approved themes
