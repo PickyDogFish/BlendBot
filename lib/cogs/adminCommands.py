@@ -158,7 +158,7 @@ class Admin(Cog):
 
     #sends a list of all approved themes
     @command(name="showapproved")
-    async def show_rejected(self, ctx):
+    async def show_approved(self, ctx):
         if ctx.author.guild_permissions.administrator:
             listOfApproved= db.column("SELECT themeName FROM themes WHERE themeStatus = 1")
             for i in range(50, len(listOfApproved), 50):
