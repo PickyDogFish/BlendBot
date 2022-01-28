@@ -42,17 +42,6 @@ class Fun(Cog):
         randomTheme = db.field("SELECT themeName FROM themes WHERE themeStatus = 1 ORDER BY RANDOM() LIMIT 1")
         await ctx.send(randomTheme)
 
-    #@command(name="help")
-    #async def show_help(self, ctx):
-    #    embeded = Embed(title="Daily blend bot help page", colour = 16754726, description = "List of commands, prefix is **$**.")
-    #    embeded.add_field(name="$help", value="Displays this help page")
-    #    embeded.add_field(name="$suggest [theme]", value="Allows you to suggest a prompt to add to the pool. Suggestions will be manually reviewed.")
-    #    embeded.add_field(name="$submit [image/video]", value="Allows you to submit your render for voting")
-    #    embeded.add_field(name="$daily", value="Tells the current daily challenge theme")
-    #    embeded.add_field(name="$random", value="Tells a random theme")
-    #    embeded.add_field(name="$time", value="Tells you how much time is left for the current daily challenge")
-    #    await ctx.send(embed = embeded)
-
     @command(name="help")
     async def show_help(self, ctx):
         helpText = "List of commands, with the prefix **$**:\n"
