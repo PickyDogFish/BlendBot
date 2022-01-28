@@ -36,7 +36,6 @@ TODO_CHANNEL_ID = 832203986575818802
 LOG_CHANNEL_ID = 864912275864158218
 BOT_SPAM_CHANNEL_ID = 831471855910780988
 CUSTOM_SUBMIT_ID = 867685564211789824
-
 DAILY_PING_ROLE = 916450288427225098
 
 #testing server IDs
@@ -395,6 +394,7 @@ class Bot(BotBase):
             print(sameScore)
             if user == None:
                 print("User not in the server anymore, but isInServer still 1.")
+                self.get_channel(LOG_CHANNEL_ID).send("User not in the server anymore, but isInServer still 1.")
             else:
                 await self.show_lb_card(user, score[1], i+1 + sameScore)
 
@@ -409,8 +409,6 @@ class Bot(BotBase):
             await channel.delete_messages(msg)
 
     async def show_lb_card(self, curUser, renderXP, place):
-        #renderXP = db.field("SELECT renderXP FROM users WHERE userID = ?", userID)
-        #place = db.field("SELECT COUNT(userID) FROM users WHERE renderXP >= ?", renderXP)
 
         img = Image.new('RGB', (720, 128), color = (30, 30, 30))
         await curUser.avatar_url_as(format="png", size=128).save(fp="img/pfp.png")
