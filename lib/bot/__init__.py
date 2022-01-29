@@ -219,11 +219,12 @@ class Bot(BotBase):
         themeName, startDate, endDate, votingEndDate, imageLink = db.record("SELECT themeName, startDate, endDate, votingEndDate, imageLink FROM challenges WHERE challengeID = ?", challengeID)
         previousChallengeID = db.field("SELECT previousChallengeID FROM currentChallenge WHERE challengeTypeID = 2")
         prevThemeName, prevStartDate, prevEndDate, prevVotingEndDate = db.record("SELECT themeName, startDate, endDate, votingEndDate FROM challenges WHERE challengeID = ?", previousChallengeID)
+        # if startDate of current custom challenge is in the future, you set it to now, set the appropriate end and voteEnd dates, sends message
         if startDate > datetime.utcnow().isoformat(timespec='seconds', sep=' '):
             numOfDays = (datetime.fromisoformat(endDate) - datetime.fromisoformat(startDate)).days
             numOfVotingDays = (datetime.fromisoformat(votingEndDate) - datetime.fromisoformat(startDate)).days
             print(numOfDays)
-            db.execute("UPDATE challenges SET startDate = ?, endDate = ?, votingEndDate = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(days=numOfDays)).isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(days=numOfVotingDays)).isoformat(timespec='seconds', sep=' '))
+            db.execute("UPDATE challenges SET startDate = ?, endDate = ?, votingEndDate = ? WHERE challengeID = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(days=numOfDays)).isoformat(timespec='seconds', sep=' '), (datetime.utcnow() + timedelta(days=numOfVotingDays)).isoformat(timespec='seconds', sep=' '), challengeID)
 
             customChallengeEmbed = Embed(title="Custom challenge: " + themeName, description="You have **" + str(numOfDays) + " days** to submit your artworks.")
             customChallengeEmbed.set_image(url=imageLink)
@@ -380,6 +381,7 @@ class Bot(BotBase):
 
     async def make_leaderboard(self):
         await self.get_channel(LOG_CHANNEL_ID).send("Making leaderboard.")
+
         scores = db.records("SELECT userID, sum(vote) as renderXP FROM (SELECT * FROM submissions NATURAL JOIN votes NATURAL JOIN challenges NATURAL JOIN users WHERE endDate > ?) WHERE isInServer = 1 GROUP BY userID ORDER BY renderXP DESC", date(date.today().year, 1, 1).strftime("%Y-%m-%d %H:%M:%S"))
 
         for i in range(len(scores)-1, -1, -1):
@@ -397,7 +399,6 @@ class Bot(BotBase):
                 self.get_channel(LOG_CHANNEL_ID).send("User not in the server anymore, but isInServer still 1.")
             else:
                 await self.show_lb_card(user, score[1], i+1 + sameScore)
-
 
     async def clear_leaderboard(self):
         msg=[]
