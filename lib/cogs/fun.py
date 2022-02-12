@@ -221,10 +221,11 @@ class Fun(Cog):
             await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).add_roles(role)
             await ctx.send("Assigned role DailyPing")
         else:
-            await ctx.send("Cant find role named \"" + roleName + "\"")
+            await ctx.send("Can't find role named \"" + roleName + "\"")
 
     @command(name="removerole")
     async def remove_role(self, ctx, roleName):
+        # 3D software roles
         if roleName.lower() == "blender":
             role = get(self.bot.guild.roles, name="Blender")
             await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).remove_roles(role)
@@ -237,6 +238,30 @@ class Fun(Cog):
             role = get(self.bot.guild.roles, name="C4D")
             await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).remove_roles(role)
             await ctx.send("Removed role C4D")
+
+        elif roleName.lower() == "3dsmax":
+            role = get(self.bot.guild.roles, name="3ds max")
+            await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).remove_roles(role)
+            await ctx.send("Removed role 3dsmax")
+                
+        elif roleName.lower() == "zbrush":
+            role = get(self.bot.guild.roles, name="Zbrush")
+            await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).remove_roles(role)
+            await ctx.send("Removed role Zbrush")
+
+        elif roleName.lower() == "substance":
+            role = get(self.bot.guild.roles, name="Substance painter")
+            await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).remove_roles(role)
+            await ctx.send("Removed role Substance painter")
+
+        elif roleName.lower() == "houdini":
+            role = get(self.bot.guild.roles, name="Houdini")
+            await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).remove_roles(role)
+            await ctx.send("Removed role Houdini")
+
+
+
+        # Other roles
         elif roleName.lower() == "helper":
             role = get(self.bot.guild.roles, name="Helper")
             await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).remove_roles(role)
@@ -246,7 +271,7 @@ class Fun(Cog):
             await self.bot.get_guild(GUILD_ID).get_member(ctx.author.id).remove_roles(role)
             await ctx.send("Removed role DailyPing")
         else:
-            await ctx.send("Cant find role named \"" + roleName + "\"")
+            await ctx.send("Can't find role named \"" + roleName + "\"")
 
     #@command(name="portfolio")
     async def show_portfolio(self, ctx):

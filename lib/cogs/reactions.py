@@ -69,6 +69,24 @@ class Reactions(Cog):
                 role = get(self.bot.guild.roles, name="C4D")
                 await self.bot.get_guild(GUILD_ID).get_member(payload.user_id).add_roles(role)
 
+            elif payload.emoji.name == "3dsmax":
+                role = get(self.bot.guild.roles, name="3ds max")
+                await self.bot.get_guild(GUILD_ID).get_member(payload.user_id).add_roles(role)
+                
+            elif payload.emoji.name == "zbrush":
+                role = get(self.bot.guild.roles, name="Zbrush")
+                await self.bot.get_guild(GUILD_ID).get_member(payload.user_id).add_roles(role)
+
+            elif payload.emoji.name == "substance":
+                role = get(self.bot.guild.roles, name="Substance painter")
+                await self.bot.get_guild(GUILD_ID).get_member(payload.user_id).add_roles(role)
+
+            elif payload.emoji.name == "houdini":
+                role = get(self.bot.guild.roles, name="Houdini")
+                await self.bot.get_guild(GUILD_ID).get_member(payload.user_id).add_roles(role)
+            
+            
+
         #other role assignments
         if payload.message_id == 921838842351349820:
             #DailyPing role
