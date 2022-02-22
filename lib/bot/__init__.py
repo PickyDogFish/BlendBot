@@ -389,16 +389,16 @@ class Bot(BotBase):
             user = self.get_user(score[0])
             sameScore = 0
             for j in range(1, len(scores)-i):
-                if score[1] == scores[i-j][1]:
+                if score[1] == scores[i+j][1]:
                     sameScore += 1
                 else:
                     break 
-            print(sameScore)
             if user == None:
                 print("User not in the server anymore, but isInServer still 1.")
                 self.get_channel(LOG_CHANNEL_ID).send("User not in the server anymore, but isInServer still 1.")
             else:
                 await self.show_lb_card(user, score[1], i+1 + sameScore)
+
 
     async def clear_leaderboard(self):
         msg=[]
