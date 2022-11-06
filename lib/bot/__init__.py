@@ -75,9 +75,12 @@ class Bot(BotBase):
     def run(self):
         
         self.setup()
-
-        with open("./lib/bot/token.0", "r", encoding="utf-8") as tk:
-            self.TOKEN = tk.read()
+        if testing:
+            with open("./lib/bot/token.1", "r", encoding="utf-8") as tk:
+                self.TOKEN = tk.read()
+        else:
+            with open("./lib/bot/token.0", "r", encoding="utf-8") as tk:
+                self.TOKEN = tk.read()
         print("running super with token")
         super().run(self.TOKEN, reconnect = True)
         print("bot running")
@@ -340,7 +343,10 @@ class Bot(BotBase):
         print("Bot connected")
 
     async def on_error(self, err, *args, **kwargs):
-        await self.get_channel(LOG_CHANNEL_ID).send("** <@176764856513462272> " + str(err) + ":   " + str(args) + "**")
+        try:
+            await self.get_channel(LOG_CHANNEL_ID).send("** <@176764856513462272> " + str(err) + ":   " + str(args) + "**")
+        except:
+            print("Could not send message")
         if err == "on_command_error":
             await args[0].send("Something went wrong.")
         raise
@@ -366,7 +372,10 @@ class Bot(BotBase):
             self.ready = True
             print(GUILD_ID)
             print(self.get_guild(GUILD_ID))
-            await self.get_channel(LOG_CHANNEL_ID).send("Bot ready.")
+            try:
+                await self.get_channel(LOG_CHANNEL_ID).send("Bot ready.")
+            except:
+                print("Could not send message")
             print("bot ready")
         else:
             lastTheme = db.field("SELECT themeName FROM challenges WHERE challengeID = (SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0)")
