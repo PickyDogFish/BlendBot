@@ -1,9 +1,15 @@
-FROM gorialis/discord.py
+FROM python:3.9-alpine
+
+RUN mkdir /app
+
+ADD requirements.txt /app
+ADD launcher.py /app
+ADD fonts /app/fonts
+ADD img /app/img
+ADD lib /app/lib
 
 WORKDIR /app
 
-COPY requirements.txt ./
 RUN pip install -r requirements.txt
 
-COPY . .
 CMD ["python", "launcher.py"]
