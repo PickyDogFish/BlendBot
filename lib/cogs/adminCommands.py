@@ -28,7 +28,7 @@ class Admin(Cog):
     async def clear(self, ctx, num_of_msgs_to_delete):
         if ctx.author.guild_permissions.administrator:
             list_of_msgs_to_delete = []
-            for message in await ctx.channel.history(limit = int(num_of_msgs_to_delete)).flatten():
+            async for message in ctx.channel.history(limit = int(num_of_msgs_to_delete)):
                 list_of_msgs_to_delete.append(message)
             await ctx.channel.delete_messages(list_of_msgs_to_delete)
             last_message = [await ctx.channel.send(str(num_of_msgs_to_delete) + " messages were deleted")]
@@ -170,7 +170,7 @@ class Admin(Cog):
     @command(name="showthemes", aliases=["themes"])
     async def show_themes(self,ctx):
         if ctx.author.guild_permissions.administrator:
-            await ctx.send(db.records("SELECT themeName FROM themes WHERE themeStatus = 1 ORDER BY lastUsed LIMIT 50"))
+            await ctx.send(db.column("SELECT themeName FROM themes WHERE themeStatus = 1 ORDER BY lastUsed LIMIT 50"))
 
     @command(name="makelb")
     async def show_leaderboard(self, ctx):
@@ -251,5 +251,5 @@ class Admin(Cog):
             embeded = Embed(title="Admin help for 3Daily bot.", colour = 16754726, description = helpText)
             await ctx.send(embed = embeded)
 
-def setup(bot):
-    bot.add_cog(Admin(bot))
+async def setup(bot):
+    await bot.add_cog(Admin(bot))

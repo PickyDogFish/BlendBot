@@ -129,7 +129,7 @@ class Fun(Cog):
                 msgstring += ":white_small_square:"
 
         embeded = Embed(colour = 0x6EA252, description = "Render level: **" + str(renderLvl) + "**⠀⠀⠀*" + str(renderLeftoverXP) + "/" + str(renderStep) + "*\n\n" + string)
-        embeded.set_author(name=ctx.author.display_name, icon_url=ctx.author.avatar_url)
+        embeded.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
         await ctx.send(embed=embeded)
 
     async def calculate_render_level(self, xp):
@@ -171,7 +171,7 @@ class Fun(Cog):
         renderProgress = int(renderLeftoverXP/renderStep * 10) + 1 
 
         img = Image.new('RGB', (480, 148), color = (30, 30, 30))
-        await user.avatar_url_as(format="png", size=128).save(fp="img/pfp.png")
+        await user.display_avatar.replace(size=128, format="png").save(fp="img/pfp.png")
         pfp = Image.open("img/pfp.png", "r")
         img.paste(pfp, (10,10))
 
@@ -310,6 +310,6 @@ class Fun(Cog):
         print("fun cog ready")
 
 
-def setup(bot):
+async def setup(bot):
     bot.remove_command('help')
-    bot.add_cog(Fun(bot))
+    await bot.add_cog(Fun(bot))

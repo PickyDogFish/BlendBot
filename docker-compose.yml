@@ -2,5 +2,6 @@ version: "2.0"
 services:
   bot:
     build: .
+    restart: always
     volumes:
       - ./data:/app/data

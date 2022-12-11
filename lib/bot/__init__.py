@@ -19,11 +19,8 @@ testing = False
 
 PREFIX = "$"
 OWNER_IDS = [176764856513462272, 261049658569129984]
-COGS=[]
-if testing:
-    COGS = [path.split("\\")[-1][:-3] for path in glob("./lib/cogs/*.py")]
-else:
-    COGS = [path.split("/")[-1][:-3] for path in glob("./lib/cogs/*.py")]
+
+COGS = [path.split("/")[-1][:-3] for path in glob("./lib/cogs/*.py")]
 
 GUILD_ID = 831137325299138621
 GENERAL_CHANNEL_ID = 831137325877690421
@@ -65,16 +62,15 @@ class Bot(BotBase):
             owner_ids = OWNER_IDS,
             intents = Intents.all())
 
-    def setup(self):
+    async def setup_hook(self):
+        print(COGS)
         for cog in COGS:
-            self.load_extension(f"lib.cogs.{cog}")
+            await self.load_extension(f"lib.cogs.{cog}")
             print(f"{cog} cog loaded")
 
         print("setup complete")
 
     def run(self):
-        
-        self.setup()
         if testing:
             with open("./lib/bot/token.1", "r", encoding="utf-8") as tk:
                 self.TOKEN = tk.read()
@@ -99,7 +95,7 @@ class Bot(BotBase):
                 format = f.split(".")[-1]
                 if format in ["png", "jpg"]:
                     embeded = Embed(title="Has collected 0 votes", colour = 0x5965F2)
-                    embeded.set_author(name = self.get_user(userID).display_name, icon_url=self.get_user(userID).avatar_url)
+                    embeded.set_author(name = self.get_user(userID).display_name, icon_url=self.get_user(userID).display_avatar.url)
                     embeded.set_image(url=f)
                     message = await self.get_channel(VOTING_CHANNEL_ID).send(embed = embeded)
 
@@ -107,7 +103,7 @@ class Bot(BotBase):
                     #attachment is a video
                     attach = await msg.attachments[0].to_file()
                     embeded = Embed(title="Has collected 0 votes", colour = 0x5965F2)
-                    embeded.set_author(name = self.get_user(userID).display_name, icon_url=self.get_user(userID).avatar_url)
+                    embeded.set_author(name = self.get_user(userID).display_name, icon_url=self.get_user(userID).display_avatar.url)
                     message = await self.get_channel(VOTING_CHANNEL_ID).send(embed=embeded)
                     try:
                         await self.get_channel(VOTING_CHANNEL_ID).send(file = attach)
@@ -403,8 +399,8 @@ class Bot(BotBase):
                 else:
                     break 
             if user == None:
-                print("User not in the server anymore, but isInServer still 1.")
-                self.get_channel(LOG_CHANNEL_ID).send("User not in the server anymore, but isInServer still 1.")
+                print(f"User {score[0]} not in the server anymore, but isInServer still 1.")
+                await self.get_channel(LOG_CHANNEL_ID).send(f"User {score[0]} not in the server anymore, but isInServer still 1.")
             else:
                 await self.show_lb_card(user, score[1], i+1 + sameScore)
 
@@ -412,16 +408,14 @@ class Bot(BotBase):
     async def clear_leaderboard(self):
         msg=[]
         channel = self.get_channel(LB_CHANNEL_ID)
-        msgHistory = channel.history(limit = 100)
-        if msgHistory != None:
-            for message in await msgHistory.flatten():
-                msg.append(message)
-            await channel.delete_messages(msg)
+        async for message in channel.history(limit = 200):
+            msg.append(message)
+        await channel.delete_messages(msg)
 
     async def show_lb_card(self, curUser, renderXP, place):
 
         img = Image.new('RGB', (720, 128), color = (30, 30, 30))
-        await curUser.avatar_url_as(format="png", size=128).save(fp="img/pfp.png")
+        await curUser.display_avatar.replace(size=128, format="png").save(fp="img/pfp.png")
         pfp = Image.open("img/pfp.png", "r")
         img.paste(pfp, (0,0))
 

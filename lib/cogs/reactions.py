@@ -104,5 +104,5 @@ class Reactions(Cog):
     async def on_raw_reaction_remove(self, payload):
         pass
 
-def setup(bot):
-    bot.add_cog(Reactions(bot))
+async def setup(bot):
+    await bot.add_cog(Reactions(bot))
