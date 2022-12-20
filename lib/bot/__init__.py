@@ -53,7 +53,7 @@ class Bot(BotBase):
     def __init__(self):
         self.PREFIX = PREFIX
         self.ready = False
-        self.guild = None
+        self.guild = GUILD_ID
         self.scheduler = AsyncIOScheduler()
 
         db.autosave(self.scheduler)
@@ -99,23 +99,23 @@ class Bot(BotBase):
                     embeded.set_image(url=f)
                     message = await self.get_channel(VOTING_CHANNEL_ID).send(embed = embeded)
 
-                else:
-                    #attachment is a video
-                    attach = await msg.attachments[0].to_file()
-                    embeded = Embed(title="Has collected 0 votes", colour = 0x5965F2)
-                    embeded.set_author(name = self.get_user(userID).display_name, icon_url=self.get_user(userID).display_avatar.url)
-                    message = await self.get_channel(VOTING_CHANNEL_ID).send(embed=embeded)
-                    try:
-                        await self.get_channel(VOTING_CHANNEL_ID).send(file = attach)
-                    except:
-                        print("error while moving video, possibly file too big")
-                        await self.get_channel(VOTING_CHANNEL_ID).send(embed = Embed(colour = 0x5965F2, title="Could not move the submission.", description=f"[Link to original message]({msg.jump_url})"))
-                await message.add_reaction("1️⃣")
-                await message.add_reaction("2️⃣")
-                await message.add_reaction("3️⃣")
-                await message.add_reaction("4️⃣")
-                await message.add_reaction("5️⃣")
-                return message.id
+            else:
+                #attachment is a video
+                attach = await msg.attachments[0].to_file()
+                embeded = Embed(title="Has collected 0 votes", colour = 0x5965F2)
+                embeded.set_author(name = self.get_user(userID).display_name, icon_url=self.get_user(userID).display_avatar.url)
+                message = await self.get_channel(VOTING_CHANNEL_ID).send(embed=embeded)
+                try:
+                    await self.get_channel(VOTING_CHANNEL_ID).send(file = attach)
+                except:
+                    print("error while moving video, possibly file too big")
+                    await self.get_channel(VOTING_CHANNEL_ID).send(embed = Embed(colour = 0x5965F2, title="Could not move the submission.", description=f"[Link to original message]({msg.jump_url})"))
+            await message.add_reaction("1️⃣")
+            await message.add_reaction("2️⃣")
+            await message.add_reaction("3️⃣")
+            await message.add_reaction("4️⃣")
+            await message.add_reaction("5️⃣")
+            return message.id
         except:
             await self.get_channel(LOG_CHANNEL_ID).send("Error moving things to voting. Can be caused by user deleting submission.")
 
@@ -356,6 +356,7 @@ class Bot(BotBase):
             raise exception
 
     async def on_ready(self):
+        await self.wait_until_ready()
         if not self.ready:
             self.guild = self.get_guild(GUILD_ID)
             self.scheduler.add_job(self.daily_challenge, CronTrigger(hour=6, minute=0))
