@@ -44,7 +44,16 @@ class Admin(Cog):
         else:
             await interaction.response.send_message("Only owners can restart the bot!")
 
-
+    @app_commands.command(name="checkusers", description="Check if users in db are still in the server.")
+    @app_commands.default_permissions(administrator=True)
+    async def check_users(self, interaction:discord.Interaction):
+        users = db.records("SELECT userID, isInServer FROM users")
+        guild = self.bot.get_guild(GUILD_ID)
+        for index in range(len(users)):
+            user = users[index]
+            if user[1] == 1 and guild.get_member(user[0]) is None:
+                 db.execute("UPDATE users SET isInServer = 0 WHERE userID = ?", user[0])
+        await interaction.response.send_message("Checked isInServer.")
 
 
     @command(name="reject")
@@ -94,6 +103,9 @@ class Admin(Cog):
             else:
                 await ctx.send("User not in database.")
 
+
+
+
     showGroup = app_commands.Group(name = "show", description = "show list of themes", default_permissions = discord.Permissions())
 
     #sends a message of max 50 suggested themes
@@ -142,12 +154,13 @@ class Admin(Cog):
 
 
 
+
     dailyGroup = app_commands.Group(name = "daily", description = "Daily challenge command group.", default_permissions = discord.Permissions())
+    
     @dailyGroup.command(name="run", description = "Runs the daily challenge function.")
     async def run_daily_challenge(self, interaction:discord.Interaction):
-        await self.bot.daily_challenge()
         await interaction.response.send_message("Ran daily challenge")
-
+        await self.bot.daily_challenge()
 
     #setdaily <themeName> sets the daily theme to the specified themeName
     @dailyGroup.command(name="set", description= "Sets the daily challenge theme.")
@@ -165,19 +178,18 @@ class Admin(Cog):
 
 
 
+
     @command(name="sync")
     async def sync_slash_commands(self, ctx):
         if ctx.author.guild_permissions.administrator:
             await self.bot.tree.sync(guild = discord.Object(id = GUILD_ID))
             await ctx.send("Synced slash commands.")
 
-
     @command(name="makelb")
     async def show_leaderboard(self, ctx):
         if ctx.author.guild_permissions.administrator:
             await self.bot.clear_leaderboard()
             await self.bot.make_leaderboard()
-
 
     @command(name="setcustom")
     async def set_custom_challenge(self,ctx, name, link, numOfDays, numOfVotingDays):
