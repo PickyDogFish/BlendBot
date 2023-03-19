@@ -94,45 +94,6 @@ class Admin(Cog):
             else:
                 await ctx.send("User not in database.")
 
-
-    #puts the old data into the new database, all paths are hardcoded
-    # @command(name="parseolddata")
-    # async def parse_old_data(self, ctx):
-    #     if ctx.author.guild_permissions.administrator:
-    #         await self.parse_user_data(ctx=ctx)
-    #         await self.parse_used_themes(ctx=ctx)
-    #         await self.parse_themes(ctx=ctx)
-    #         await self.parse_suggestions(ctx=ctx)
-    #         await ctx.send("Parsed old data")
-
-    # async def parse_user_data(self, ctx):
-    #     if ctx.author.guild_permissions.administrator:
-    #         with open("D:\BotGit\levels.json", "r+") as file:
-    #             data = json.load(file)
-    #             for user in data:
-    #                 db.execute("INSERT OR IGNORE INTO users (userID, msgXP, renderXP) VALUES (?,?,?)", user, int(data[user]["messagepoints"]), data[user]["dailypoints"])
-
-    # async def parse_themes(self, ctx):
-    #     if ctx.author.guild_permissions.administrator:
-    #         with open("D:/BotGit/themes.txt", "r") as file:
-    #             for line in file:
-    #                 db.execute("INSERT OR IGNORE INTO themes (themeName, themeStatus) VALUES (?,1)", line.strip().replace("_", " "))
-
-    # async def parse_used_themes(self, ctx):
-    #     if ctx.author.guild_permissions.administrator:
-    #         with open("D:/BotGit/usedThemes.txt", "r") as file:
-    #             for line in file:
-    #                 db.execute("INSERT OR IGNORE INTO themes (themeName, themeStatus, lastUsed) VALUES (?,1,?)", line.strip().replace("_", " "), datetime.utcnow().isoformat())
-    
-    # async def parse_suggestions(self, ctx):
-    #     if ctx.author.guild_permissions.administrator:
-    #         with open("D:/BotGit/suggestions.txt", "r") as file:
-    #             for line in file:
-    #                 db.execute("INSERT OR IGNORE INTO themes (themeName, themeStatus) VALUES (?,0)", line.strip().replace("_", " "))
-
-
-
-
     showGroup = app_commands.Group(name = "show", description = "show list of themes", default_permissions = discord.Permissions())
 
     #sends a message of max 50 suggested themes
