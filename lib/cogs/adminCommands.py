@@ -2,6 +2,7 @@ import asyncio
 import sys
 import discord
 from discord import app_commands
+from discord.ext import commands
 from discord.ext.commands import Cog, command
 from discord.ext.commands.core import cooldown
 from ..db import db
@@ -18,28 +19,33 @@ class Admin(Cog):
     async def on_ready(self):
         print("admin cog ready")
 
-    @command(name="addusertodb")
-    async def add_user_to_db(self, ctx, userID):
-        if ctx.author.guild_permissions.administrator:
-            db.execute("INSERT OR IGNORE INTO users (UserID) VALUES (?)", userID)
-            await ctx.send(f"Added {userID} to the database!")
+    @app_commands.command(name="addusertodb", description="Adds [userID] to the table of users.")
+    @app_commands.default_permissions(administrator=True)
+    async def add_user_to_db(self, interaction:discord.Interaction, user:int):
+        db.execute("INSERT OR IGNORE INTO users (UserID) VALUES (?)", user)
+        await interaction.response.send(f"Added {user} to the database!")
 
-    @command(name="clear")
-    async def clear(self, ctx, num_of_msgs_to_delete):
-        if ctx.author.guild_permissions.administrator:
-            list_of_msgs_to_delete = []
-            async for message in ctx.channel.history(limit = int(num_of_msgs_to_delete)):
-                list_of_msgs_to_delete.append(message)
-            await ctx.channel.delete_messages(list_of_msgs_to_delete)
-            last_message = [await ctx.channel.send(str(num_of_msgs_to_delete) + " messages were deleted")]
-            await asyncio.sleep(2)
-            await message.channel.delete_messages(last_message)
+    @app_commands.command(name="clear", description="Deletes the last [number] messages.")
+    @app_commands.default_permissions(administrator=True)
+    async def clear(self, interaction=discord.Interaction, number:int=1):
+        list_of_msgs_to_delete = []
+        async for message in interaction.channel.history(limit = int(number)):
+            list_of_msgs_to_delete.append(message)
+        await interaction.response.send_message(str(number) + " messages were deleted!", ephemeral=True)
+        await interaction.channel.delete_messages(list_of_msgs_to_delete)
 
-    @command(name="kill")
-    async def kill(self, ctx):
-        if ctx.author.guild_permissions.administrator:
-            await ctx.channel.send("See you soon!")
+
+    @app_commands.command(name="restart", description="Restarts the bot.")
+    @app_commands.default_permissions(administrator=True)
+    async def restart(self, interaction:discord.Interaction):
+        if interaction.user.id in self.bot.owner_ids:
+            await interaction.response.send_message("See you soon!")
             sys.exit()
+        else:
+            await interaction.response.send_message("Only owners can restart the bot!")
+
+
+
 
     @command(name="reject")
     async def reject(self, ctx, *, theme):
