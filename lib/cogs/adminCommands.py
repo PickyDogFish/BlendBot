@@ -22,13 +22,13 @@ class Admin(Cog):
         print("admin cog ready")
 
 
-    @app_commands.command(name="addusertodb", description="Adds [userID] to the table of users.")
+    @app_commands.command(name="addusertodb", description="Adds [userID] to the table of users")
     @app_commands.default_permissions(administrator=True)
     async def add_user_to_db(self, interaction:discord.Interaction, user:str):
         db.execute("INSERT OR IGNORE INTO users (UserID) VALUES (?)", int(user))
         await interaction.response.send_message(f"Added {user} to the database!")
 
-    @app_commands.command(name="clear", description="Deletes the last [number] messages.")
+    @app_commands.command(name="clear", description="Deletes the last [number] messages")
     @app_commands.default_permissions(administrator=True)
     async def clear(self, interaction=discord.Interaction, number:int=1):
         list_of_msgs_to_delete = []
@@ -38,7 +38,7 @@ class Admin(Cog):
         await interaction.channel.delete_messages(list_of_msgs_to_delete)
 
 
-    @app_commands.command(name="restart", description="Restarts the bot.")
+    @app_commands.command(name="restart", description="Restarts the bot")
     @app_commands.default_permissions(administrator=True)
     async def restart(self, interaction:discord.Interaction):
         if interaction.user.id in self.bot.owner_ids:
@@ -69,15 +69,15 @@ class Admin(Cog):
             else:
                 await ctx.send("User not in database.")
 
-    dailyGroup = app_commands.Group(name = "daily", description = "Daily challenge command group.", default_permissions = discord.Permissions())
+    dailyGroup = app_commands.Group(name = "daily", description = "Daily challenge command group", default_permissions = discord.Permissions())
     
-    @dailyGroup.command(name="run", description = "Runs the daily challenge function.")
+    @dailyGroup.command(name="run", description = "Runs the daily challenge function")
     async def run_daily_challenge(self, interaction:discord.Interaction):
         await interaction.response.send_message("Ran daily challenge")
         await self.bot.daily_challenge()
 
     #setdaily <themeName> sets the daily theme to the specified themeName
-    @dailyGroup.command(name="set", description= "Sets the daily challenge theme.")
+    @dailyGroup.command(name="set", description= "Sets the daily challenge theme")
     async def setdaily(self, interaction: discord.Interaction, theme: str):
         if db.field("SELECT * FROM themes WHERE themeName = ?", theme) != None:
             lastDaily = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0")
