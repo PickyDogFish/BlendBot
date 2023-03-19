@@ -67,25 +67,24 @@ class ThemeManagement(Cog):
             case _:
                 await interaction.response.send_message("Please select one of the options")
 
-    @command(name="setnotused", aliases = ["setunused"])
-    async def not_used(self, ctx, *, theme):
-        if ctx.author.guild_permissions.administrator:
-            if db.field("SELECT * FROM themes WHERE themeName = ?", theme) != None:
-                db.execute("UPDATE themes SET lastUsed = '2011-11-11 11:11:11' WHERE themeName = ?", theme)
-                await ctx.send("Theme set to not used")
-            else:
-                await ctx.send("Theme not found.")
-    
-    @command(name="setused")
-    async def used(self, ctx, *, theme):
-        if ctx.author.guild_permissions.administrator:
-            if db.field("SELECT * FROM themes WHERE themeName = ?", theme) != None:
-                db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '),theme)
-                await ctx.send("Theme set to used")
-            else:
-                await ctx.send("Theme not found.")
-
-
+    @app_commands.command(name="set_used", description="Set if theme recently used")
+    @app_commands.default_permissions(administrator=True)
+    @app_commands.describe(set_to="Status to set to")
+    @app_commands.choices(set_to=[
+        app_commands.Choice(name="used", value=1),
+        app_commands.Choice(name="unused", value=2),
+    ])
+    async def set_theme_used(self, interaction:discord.Interaction, theme:str, set_to:int):
+        if db.field("SELECT * FROM themes WHERE themeName = ?", theme) != None:
+            match set_to:
+                case 1:
+                    db.execute("UPDATE themes SET lastUsed = ? WHERE themeName = ?", datetime.utcnow().isoformat(timespec='seconds', sep=' '),theme)
+                    await interaction.response.send_message("Theme set to used.")
+                case 2:
+                    db.execute("UPDATE themes SET lastUsed = '2011-11-11 11:11:11' WHERE themeName = ?", theme)
+                    await interaction.response.send_message("Theme set to not used.")
+        else:
+            await interaction.response.send_message("Theme not found.")
 
 class ThemeView(discord.ui.View):
     async def on_timeout(self) -> None:
