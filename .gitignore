@@ -2,5 +2,4 @@ lib/bot/token.1
 lib/bot/token.0
 img/*
 !/img/.keep
-data/*
-!/data/build.sql
+data/db/database.db
