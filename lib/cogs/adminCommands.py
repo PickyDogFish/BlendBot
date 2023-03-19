@@ -21,9 +21,9 @@ class Admin(Cog):
 
     @app_commands.command(name="addusertodb", description="Adds [userID] to the table of users.")
     @app_commands.default_permissions(administrator=True)
-    async def add_user_to_db(self, interaction:discord.Interaction, user:int):
-        db.execute("INSERT OR IGNORE INTO users (UserID) VALUES (?)", user)
-        await interaction.response.send(f"Added {user} to the database!")
+    async def add_user_to_db(self, interaction:discord.Interaction, user:str):
+        db.execute("INSERT OR IGNORE INTO users (UserID) VALUES (?)", int(user))
+        await interaction.response.send_message(f"Added {user} to the database!")
 
     @app_commands.command(name="clear", description="Deletes the last [number] messages.")
     @app_commands.default_permissions(administrator=True)
