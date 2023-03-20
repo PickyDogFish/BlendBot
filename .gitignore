@@ -3,3 +3,4 @@ lib/bot/token.0
 img/*
 !/img/.keep
 /backup
+data/db/database.db

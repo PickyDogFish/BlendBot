@@ -111,10 +111,9 @@ class Fun(Cog):
 
     @command(name="oldlevel")
     async def show_level(self,ctx):
-        msgXP, renderXP = db.record("SELECT msgXP, renderXP FROM users WHERE userID = ?", ctx.author.id)
+        renderXP = db.field("SELECT SUM(vote) FROM votes NATURAL JOIN submissions WHERE userID = ?", ctx.author.id)
         (renderLvl, renderLeftoverXP, renderStep) = await self.calculate_render_level(renderXP)
         renderProgress = int(renderLeftoverXP/renderStep * 10)
-        (msgLevel, msgProgress) = await self.calculate_msg_level(msgXP)
         string = ""
         msgstring = ""
         for i in range(1, 10, 1):
@@ -122,11 +121,6 @@ class Fun(Cog):
                 string += ":green_square:"
             else:
                 string += ":white_small_square:"
-        for i in range(1, 10, 1):
-            if i <= msgProgress:
-                msgstring += ":green_square:"
-            else:
-                msgstring += ":white_small_square:"
 
         embeded = Embed(colour = 0x6EA252, description = "Render level: **" + str(renderLvl) + "**⠀⠀⠀*" + str(renderLeftoverXP) + "/" + str(renderStep) + "*\n\n" + string)
         embeded.set_author(name=ctx.author.display_name, icon_url=ctx.author.display_avatar.url)
@@ -135,14 +129,15 @@ class Fun(Cog):
     async def calculate_render_level(self, xp):
         level = 0
         step = 20
-        while xp-step >= 0:
-            xp = xp-step
-            level += 1
-            step += 6
-        return (level, xp, step)
+        if xp is not None:
+            while xp-step >= 0:
+                xp = xp-step
+                level += 1
+                step += 6
+            return (level, xp, step)
+        else:
+            return (0,0,step)
 
-    async def calculate_msg_level(self,xp):
-        return (int(sqrt(xp*10)//10), sqrt(xp*10)%10)
 
     @command(name="level", aliases=["rank"])
     async def make_level_image(self, ctx, username=None):

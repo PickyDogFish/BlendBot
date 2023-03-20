@@ -37,11 +37,11 @@ DAILY_PING_ROLE = 916450288427225098
 
 #testing server IDs
 if testing:
+    GUILD_ID = 835427909724143617
     GENERAL_CHANNEL_ID = 835427910201507860
     SUBMIT_CHANNEL_ID = 835429505257963550
     VOTING_CHANNEL_ID = 835429490464129054
     LB_CHANNEL_ID = 857997935244869652
-    GUILD_ID = 835427909724143617
     LOG_CHANNEL_ID = 864911454628741160
     BOT_TESTING_CHANNEL_ID = 865206590336532510
     BOT_SPAM_CHANNEL_ID = BOT_TESTING_CHANNEL_ID
@@ -414,10 +414,10 @@ class Bot(BotBase):
         await channel.delete_messages(msg)
 
     async def show_lb_card(self, curUser, renderXP, place):
-
         img = Image.new('RGB', (720, 128), color = (30, 30, 30))
         await curUser.display_avatar.replace(size=128, format="png").save(fp="img/pfp.png")
         pfp = Image.open("img/pfp.png", "r")
+        pfp = pfp.resize((128,128))
         img.paste(pfp, (0,0))
 
         d = ImageDraw.Draw(img)
