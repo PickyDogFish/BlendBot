@@ -17,6 +17,9 @@ from PIL import Image, ImageDraw, ImageFont
 
 testing = False
 
+#REWRITES.FEATURES.BUGS
+VERSION = "2.1.3"
+
 PREFIX = "$"
 OWNER_IDS = [176764856513462272, 261049658569129984]
 
@@ -339,7 +342,7 @@ class Bot(BotBase):
 
     async def on_connect(self):
         try:
-            await self.server_log("Bot connected.")
+            await self.server_log(f"Bot {VERSION} connected.")
         except:
             print("Couldn't send on connect message")
         print("Bot connected")
