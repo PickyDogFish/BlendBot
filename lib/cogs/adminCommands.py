@@ -21,7 +21,7 @@ class Admin(Cog):
     async def on_ready(self):
         print("admin cog ready")
 
-    @app_commands.command(name="version", description="Adds [userID] to the table of users")
+    @app_commands.command(name="version", description="Bot version")
     @app_commands.default_permissions(administrator=True)
     async def show_version(self, interaction:discord.Interaction):
         await interaction.response.send_message(VERSION)
