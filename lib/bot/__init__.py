@@ -117,7 +117,7 @@ class Bot(BotBase):
                 await message.add_reaction("5️⃣")
                 return message.id
         except:
-            await self.get_channel(LOG_CHANNEL_ID).send("Error moving things to voting. Can be caused by user deleting submission.")
+            await self.server_error("Could not move submissions to voting. Can be caused by user deleting submission.")
 
     # returns a dict of "userID": "rank" for given list of users. Calculates points up to beforeDate
     async def get_ranks(self, userList, beforeDate):
@@ -145,7 +145,7 @@ class Bot(BotBase):
                     await self.get_guild(GUILD_ID).get_member(submission[0]).add_roles(role)
                 db.execute("UPDATE users SET renderXP = renderXP + ? WHERE userID = ?", submission[2], submission[0])
             except:
-                await self.get_channel(LOG_CHANNEL_ID).send("Error while counting pre-vote score")
+                await self.server_error("Could not count votes.")
         
         if isSubmission:
             countTheme, startDate = db.record("SELECT themeName, startDate FROM challenges WHERE challengeID = ?", challengeID)
@@ -163,7 +163,7 @@ class Bot(BotBase):
                 if userObj != None:
                     await self.get_channel(BOT_SPAM_CHANNEL_ID).send(userObj.mention + f" moved up from {previousRanks[user]}. place to {currRanks[user]}. place!")
                 else:
-                    await self.get_channel(LOG_CHANNEL_ID).send("ERROR: Could not get user whole checking ranks.")
+                    await server_error("Could not get user while checking ranks.")
 
     # moves all submissions to voting
     async def move_all_submissions_to_voting(self, challengeID):
@@ -178,6 +178,7 @@ class Bot(BotBase):
                     db.execute("UPDATE submissions SET votingMsgID = ? WHERE msgID = ?", votingMsgID, msgID)
         else:
             await self.get_channel(VOTING_CHANNEL_ID).send("Looks like there are no submissions for the theme " + themeName)
+        
 
     async def announce_new_daily_challenge(self):
         challengeID = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0")
@@ -197,7 +198,7 @@ class Bot(BotBase):
 
 
     async def daily_challenge(self):
-        await self.get_channel(LOG_CHANNEL_ID).send("Running daily challenges function")
+        await server_log("Running daily challenges function")
         challengeID, previousChallengeID = db.record("SELECT currentChallengeID, previousChallengeID FROM currentChallenge WHERE challengeTypeID = 0")
         previousUsers = db.column("SELECT userID FROM submissions WHERE challengeID = ?", previousChallengeID)
         previousEndDate = db.field("SELECT endDate FROM challenges WHERE challengeID = ?", previousChallengeID)
@@ -207,13 +208,14 @@ class Bot(BotBase):
 
         await self.move_all_submissions_to_voting(challengeID)
         await self.announce_new_daily_challenge()
+        await server_log("Finished running daily challenges function")
 
 
     async def weekly_challenge(self):
-        await self.get_channel(LOG_CHANNEL_ID).send("Reminder to implement weekly challenges")
+        await self.server_log("Reminder to implement weekly challenges")
 
     async def custom_challenge(self):
-        await self.get_channel(LOG_CHANNEL_ID).send("Running custom_challenge function.")
+        await self.server_log("Running custom_challenge function.")
         challengeID = db.field("SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 2")
         themeName, startDate, endDate, votingEndDate, imageLink = db.record("SELECT themeName, startDate, endDate, votingEndDate, imageLink FROM challenges WHERE challengeID = ?", challengeID)
         previousChallengeID = db.field("SELECT previousChallengeID FROM currentChallenge WHERE challengeTypeID = 2")
@@ -232,7 +234,7 @@ class Bot(BotBase):
 
         #if prevVotingEndDate is today, count the votes for it
         if prevVotingEndDate != None and datetime.fromisoformat(prevVotingEndDate).date() == datetime.utcnow().date():
-            await self.get_channel(LOG_CHANNEL_ID).send("Counting votes of previous custom challenge")
+            await self.server_log("Counting votes of previous custom challenge")
             #count votes
             scores = db.records("SELECT userID, msgID, challengeID, SUM(vote) FROM submissions NATURAL JOIN votes WHERE challengeID = ? GROUP BY msgID", previousChallengeID)
             isSubmission = False
@@ -273,7 +275,7 @@ class Bot(BotBase):
 
         #if votingEndDate is today, count the votes for it
         if datetime.fromisoformat(votingEndDate).date() == datetime.utcnow().date():
-            await self.get_channel(LOG_CHANNEL_ID).send("Counting votes of current custom challenge")
+            await self.server_log("Counting votes of current custom challenge")
             #count votes
             scores = db.records("SELECT userID, msgID, challengeID, SUM(vote) FROM submissions NATURAL JOIN votes WHERE challengeID = ? GROUP BY msgID", challengeID)
             isSubmission = False
@@ -314,7 +316,7 @@ class Bot(BotBase):
 
         #if endDate is today, move things to voting
         elif datetime.fromisoformat(endDate).date() == datetime.utcnow().date():
-            await self.get_channel(LOG_CHANNEL_ID).send("Moving submissions for custom_challenge to voting")
+            await self.server_log("Moving submissions for custom_challenge to voting")
             if db.record("SELECT userID, msgID FROM submissions WHERE challengeID = ?", challengeID) != None:
                 preSubEmbed = Embed(colour = 0x5965F2, title="Submissions for the custom challenge " + themeName)
                 await self.get_channel(VOTING_CHANNEL_ID).send(embed=preSubEmbed)
@@ -325,7 +327,11 @@ class Bot(BotBase):
             else:
                 await self.get_channel(VOTING_CHANNEL_ID).send("Looks like there are no submissions for the custom challenge " + themeName)
 
+    async def server_log(self, message):
+        await self.get_channel(LOG_CHANNEL_ID).send(f"INFO: {message}")
 
+    async def server_error(self, message):
+        await self.get_channel(LOG_CHANNEL_ID).send(f"ERROR: {message}")
 
 
     async def on_disconnect(self):
@@ -333,14 +339,14 @@ class Bot(BotBase):
 
     async def on_connect(self):
         try:
-            await self.get_channel(LOG_CHANNEL_ID).send("Bot connected.")
+            await self.server_log("Bot connected.")
         except:
             print("Couldn't send on connect message")
         print("Bot connected")
 
     async def on_error(self, err, *args, **kwargs):
         try:
-            await self.get_channel(LOG_CHANNEL_ID).send("** <@176764856513462272> " + str(err) + ":   " + str(args) + "**")
+            await self.server_error("** <@176764856513462272> " + str(err) + ":   " + str(args) + "**")
         except:
             print("Could not send message")
         if err == "on_command_error":
@@ -370,7 +376,7 @@ class Bot(BotBase):
             print(GUILD_ID)
             print(self.get_guild(GUILD_ID))
             try:
-                await self.get_channel(LOG_CHANNEL_ID).send("Bot ready.")
+                await server_log("Bot ready.")
             except:
                 print("Could not send message")
             print("bot ready")
@@ -378,7 +384,7 @@ class Bot(BotBase):
             lastTheme = db.field("SELECT themeName FROM challenges WHERE challengeID = (SELECT currentChallengeID FROM currentChallenge WHERE challengeTypeID = 0)")
             await self.change_presence(activity=Activity(type=ActivityType.watching, name = "you make " + lastTheme))
 
-            await self.get_channel(LOG_CHANNEL_ID).send("Bot ready after reconnect.")
+            await self.server_log("Bot ready after reconnect.")
             print("bot reconnected")
 
     async def on_message(self, message):
@@ -386,7 +392,7 @@ class Bot(BotBase):
             await self.process_commands(message)
 
     async def make_leaderboard(self):
-        await self.get_channel(LOG_CHANNEL_ID).send("Making leaderboard.")
+        await self.server_log("Making leaderboard.")
 
         scores = db.records("SELECT userID, sum(vote) as renderXP FROM (SELECT * FROM submissions NATURAL JOIN votes NATURAL JOIN challenges NATURAL JOIN users WHERE endDate > ?) WHERE isInServer = 1 GROUP BY userID ORDER BY renderXP DESC", date(date.today().year, 1, 1).strftime("%Y-%m-%d %H:%M:%S"))
 
@@ -401,7 +407,7 @@ class Bot(BotBase):
                     break 
             if user == None:
                 print(f"User {score[0]} not in the server anymore, but isInServer still 1.")
-                await self.get_channel(LOG_CHANNEL_ID).send(f"User {score[0]} not in the server anymore, but isInServer still 1.")
+                await self.server_log(f"User {score[0]} not in the server anymore, but isInServer still 1.")
             else:
                 await self.show_lb_card(user, score[1], i+1 + sameScore)
 
@@ -411,7 +417,10 @@ class Bot(BotBase):
         channel = self.get_channel(LB_CHANNEL_ID)
         async for message in channel.history(limit = 200):
             msg.append(message)
-        await channel.delete_messages(msg)
+        try:
+            await channel.delete_messages(msg)
+        except:
+            await self.server_error("Could not delete the leaderboard.")
 
     async def show_lb_card(self, curUser, renderXP, place):
         img = Image.new('RGB', (720, 128), color = (30, 30, 30))
