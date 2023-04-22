@@ -8,7 +8,7 @@ from discord.ext.commands.core import cooldown
 from ..db import db
 from datetime import date, datetime, timedelta
 import json
-from lib.bot import LOG_CHANNEL_ID, OWNER_IDS, SUBMIT_CHANNEL_ID, GUILD_ID
+from lib.bot import LOG_CHANNEL_ID, OWNER_IDS, SUBMIT_CHANNEL_ID, GUILD_ID, VERSION
 from discord import Embed
 
 
@@ -20,6 +20,11 @@ class Admin(Cog):
     @Cog.listener()
     async def on_ready(self):
         print("admin cog ready")
+
+    @app_commands.command(name="version", description="Adds [userID] to the table of users")
+    @app_commands.default_permissions(administrator=True)
+    async def show_version(self, interaction:discord.Interaction):
+        await interaction.response.send_message(VERSION)
 
 
     @app_commands.command(name="addusertodb", description="Adds [userID] to the table of users")
