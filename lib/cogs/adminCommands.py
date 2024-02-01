@@ -8,7 +8,7 @@ from discord.ext.commands.core import cooldown
 from ..db import db
 from datetime import date, datetime, timedelta
 import json
-from lib.bot import LOG_CHANNEL_ID, OWNER_IDS, SUBMIT_CHANNEL_ID, GUILD_ID
+from lib.bot import LOG_CHANNEL_ID, OWNER_IDS, SUBMIT_CHANNEL_ID, GUILD_ID, VERSION
 from discord import Embed
 
 
@@ -20,6 +20,11 @@ class Admin(Cog):
     @Cog.listener()
     async def on_ready(self):
         print("admin cog ready")
+
+    @app_commands.command(name="version", description="Bot version")
+    @app_commands.default_permissions(administrator=True)
+    async def show_version(self, interaction:discord.Interaction):
+        await interaction.response.send_message(VERSION)
 
 
     @app_commands.command(name="addusertodb", description="Adds [userID] to the table of users")
@@ -142,19 +147,10 @@ class Admin(Cog):
             helpText = "List of commands, with the prefix **$**:\n\n\n"
             helpText += "`$clear [number]`: Deletes last *number* messages.\n\n"
             helpText += "`$addusertodb [userId]`: Adds user entry into db with userId. \n\n"
-            helpText += "`$reject [theme_name]`: Sets the status of a theme to rejected.\n\n"
-            helpText += "`$approve [theme_name]`: Sets the status of a theme to approved.\n\n"
             helpText += "`$setnotused [theme_name]`: sets last used date to 2011-11-11 11:11:11.\n\n"
             helpText += "`$setused [theme_name]`: sets last used to today.\n\n"
-            helpText += "`$setdaily [theme_name]`: sets the current daily to theme_name.\n\n"
             helpText += "`$givexp [userID] [xpAmount]`: gives user with userID xpAmount of renderXP. xpAmount can be negative.\n\n"
-            helpText += "`$showsuggestions`: shows suggestions without status. also `$sugg` or `$suggestions`.\n\n"
-            helpText += "`$showapproved`: shows all approved themes.\n\n"
-            helpText += "`$showrejected`: shows all rejected themes.\n\n"
-            helpText += "`$showthemes`: shows 50 themes that are in the pool for the next daily.\n\n"
             helpText += "`$makelb`: remakes the leaderboard.\n\n"
-            helpText += "`$dodaily`: runs the daily challenge function.\n\n"
-            helpText += "`$showvoters`: shows a list of voters.\n\n"
             helpText += "`$setcustom [name] [link] [numOfDays] [numOfVotingDays]`: set things for a custom challenge.\n\n"
             helpText += "`$docustom`: runs the custom challenge function.\n\n"
 
