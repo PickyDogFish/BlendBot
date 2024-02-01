@@ -15,7 +15,7 @@ from ..db import db
 
 from PIL import Image, ImageDraw, ImageFont
 
-testing = True
+testing = False
 
 #REWRITES.FEATURES.BUGS
 VERSION = "2.1.4"

@@ -1,4 +1,4 @@
-from lib.bot import CUSTOM_SUBMIT_ID, LOG_CHANNEL_ID, SUBMIT_CHANNEL_ID, GUILD_ID, VOTING_CHANNEL_ID
+from lib.bot import CUSTOM_SUBMIT_ID, SUBMIT_CHANNEL_ID, GUILD_ID, VOTING_CHANNEL_ID
 from discord.ext.commands import Cog
 from discord.ext.commands import command
 from discord import Embed
@@ -154,7 +154,7 @@ class Fun(Cog):
             user = ctx.author
 
         if not user:
-            await self.bot.get_channel(LOG_CHANNEL_ID).send(f"ERROR: could not retrieve user: {username} -> {username[3:-1]}")
+            await self.bot.server_error(f"ERROR: could not retrieve user: {username} -> {username[3:-1]}")
             await ctx.send("Could not retrieve the user.")
             return
         if user.bot:

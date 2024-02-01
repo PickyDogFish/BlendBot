@@ -8,7 +8,7 @@ from discord.ext.commands.core import cooldown
 from ..db import db
 from datetime import date, datetime, timedelta
 import json
-from lib.bot import LOG_CHANNEL_ID, OWNER_IDS, SUBMIT_CHANNEL_ID, GUILD_ID, VERSION
+from lib.bot import OWNER_IDS, SUBMIT_CHANNEL_ID, GUILD_ID, VERSION
 from discord import Embed
 
 
@@ -66,7 +66,7 @@ class Admin(Cog):
 
     @command(name="givexp")
     async def givexp(self, ctx, userID, XPamount):
-        await self.bot.get_channel(LOG_CHANNEL_ID).send(f"Added {str(XPamount)} XP to {self.bot.get_user(int(userID)).display_name}")
+        await self.bot.server_log(f"Added {str(XPamount)} XP to {self.bot.get_user(int(userID)).display_name}")
         if ctx.author.guild_permissions.administrator:
             if db.field("SELECT userID FROM users WHERE userID = ?", userID) != None:
                 db.execute("UPDATE users SET renderXP = renderXP + ? WHERE userID = ?", XPamount, userID)
@@ -128,7 +128,7 @@ class Admin(Cog):
     # @command(name="customSQL")
     # async def run_custom_SQL(self, ctx, *, command):
     #     if ctx.author.id in OWNER_IDS:
-    #         await self.bot.get_channel(LOG_CHANNEL_ID).send(ctx.author.name + " just ran custom SQL: " + command)
+    #         await server_log(ctx.author.name + " just ran custom SQL: " + command)
     #         db.execute(command)
 
 
