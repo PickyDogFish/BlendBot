@@ -105,7 +105,10 @@ class ThemeView(discord.ui.View):
         if suggestion is None:
             for item in self.children:
                 item.disabled = True
-            await interaction.followup.send("Out of suggestions")
+            await interaction.response.edit_message(content = "No more suggestions!")
+            msg = await interaction.original_response()
+            await msg.delete()
+            await interaction.channel.send("No more suggestions!")
         else:
             await interaction.response.edit_message(content=suggestion)
 

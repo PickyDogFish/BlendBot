@@ -4,3 +4,7 @@ img/*
 !/img/.keep
 /backup
 data/db/database.db
+/Scripts
+/lib/site-packages
+pyvenv.cfg
+

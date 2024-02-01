@@ -20,7 +20,7 @@ testing = False
 PREFIX = "$"
 OWNER_IDS = [176764856513462272, 261049658569129984]
 
-COGS = [path.split("/")[-1][:-3] for path in glob("./lib/cogs/*.py")]
+COGS = [path.split()[-1][:-3] for path in glob("*.py", root_dir="./lib/cogs/")]
 
 GUILD_ID = 831137325299138621
 GENERAL_CHANNEL_ID = 831137325877690421
@@ -411,7 +411,10 @@ class Bot(BotBase):
         channel = self.get_channel(LB_CHANNEL_ID)
         async for message in channel.history(limit = 200):
             msg.append(message)
-        await channel.delete_messages(msg)
+        try:
+            await channel.delete_messages(msg)
+        except:
+            await self.get_channel(LOG_CHANNEL_ID).send("Could not delete leaderboard, skipping deletion.")
 
     async def show_lb_card(self, curUser, renderXP, place):
         img = Image.new('RGB', (720, 128), color = (30, 30, 30))
@@ -421,19 +424,21 @@ class Bot(BotBase):
         img.paste(pfp, (0,0))
 
         d = ImageDraw.Draw(img)
-        nameWidth, nameHeight = d.textsize(curUser.name, font=ImageFont.truetype('fonts/arial.ttf', 64))
+        nameWidth = d.textlength(curUser.name, font=ImageFont.truetype('fonts/arial.ttf', 64))
         if nameWidth < 464: 
             d.text((138,30), curUser.name, font=ImageFont.truetype('fonts/arial.ttf', 64), fill=(200, 200, 200))
         else:
             d.text((138,30), curUser.name[0:12] + "...", font=ImageFont.truetype('fonts/arial.ttf', 60), fill=(200, 200, 200))
         d.rectangle((592,0, 720, 128), fill=(200, 200, 0))
-        placeWidth, placeHeight = d.textsize(str(place), font=ImageFont.truetype('fonts/arial.ttf', 120))
-        xpWidth, xpHeight = d.textsize(str(renderXP), font=ImageFont.truetype('fonts/arial.ttf', 32))
+        placeHeight = 120
+        placeWidth = d.textlength(str(place), font=ImageFont.truetype('fonts/arial.ttf', 120))
+        xpWidth = d.textlength(str(renderXP), font=ImageFont.truetype('fonts/arial.ttf', 32))
         if placeWidth < 90:
             d.text((656 - placeWidth/2,-18), str(place), font=ImageFont.truetype('fonts/arial.ttf', 120), fill=(0, 0, 0))
             d.text((656 - xpWidth/2,-18 + placeHeight), str(renderXP), font=ImageFont.truetype('fonts/arial.ttf', 32), fill=(30, 30, 30))
         else:
-            placeWidth, placeHeight = d.textsize(str(place), font=ImageFont.truetype('fonts/arial.ttf', 90))
+            placeHeight = 90
+            placeWidth = d.textlength(str(place), font=ImageFont.truetype('fonts/arial.ttf', 90))
             d.text((656 - placeWidth/2, 0), str(place), font=ImageFont.truetype('fonts/arial.ttf', 90), fill=(0, 0, 0))
             d.text((656 - xpWidth/2, 0 + placeHeight), str(renderXP), font=ImageFont.truetype('fonts/arial.ttf', 32), fill=(30, 30, 30))
 
